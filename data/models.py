@@ -7,8 +7,8 @@ from datetime import datetime
 class Player(BaseModel):
     id: Optional[int]
     full_name: constr(pattern=r'^[a-zA-Z\s\-]+$')
-    country: str
-    sport_club: str
+    country: Optional[str]
+    sport_club: Optional[str]
 
     @classmethod
     def from_query_result(cls, id, full_name, country, sport_club):
@@ -34,21 +34,6 @@ class RegisterUser(BaseModel):
                    )
 
 
-class Tournament(BaseModel):
-    id: Optional[int]
-    title: str
-    tour_format: str
-    prize: str
-
-    @classmethod
-    def from_query_result(cls, id, title, tour_format, prize):
-        return cls(id=id,
-                   title=title,
-                   format=tournament_format_validator(tour_format),
-                   prize=prize,
-                   )
-
-
 class Match(BaseModel):
     id: Optional[int]
     date: datetime
@@ -64,6 +49,30 @@ class Match(BaseModel):
                    time_limit=time_limit,
                    score_limit=score_limit
                    )
+
+
+class Tournament(BaseModel):
+    id: Optional[int]
+    title: str
+    tour_format: str
+    prize: str
+    matches: Optional[list, Match]
+
+    @classmethod
+    def from_query_result(cls, id, title, tour_format, prize):
+        return cls(id=id,
+                   title=title,
+                   tour_format=tour_format,
+                   prize=prize,
+                   )
+
+
+class TournamentCreateModel(BaseModel):
+    title: str
+    tour_format: str
+    prize: str
+    participants: list[Player.full_name]
+
 
 class League(BaseModel):
     # requires scoring for loss, draw and, win
