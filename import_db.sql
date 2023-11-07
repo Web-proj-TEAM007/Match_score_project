@@ -18,14 +18,35 @@ CREATE SCHEMA IF NOT EXISTS `match_score_project` DEFAULT CHARACTER SET latin1 ;
 USE `match_score_project` ;
 
 -- -----------------------------------------------------
+-- Table `match_score_project`.`profile`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `match_score_project`.`profile` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `tournament_won` INT NULL,
+  `tournamen_played` INT NULL,
+  `matches_won` INT NULL,
+  `matches_played` VARCHAR(45) NULL,
+  `matches_lost` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `match_score_project`.`players`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `match_score_project`.`players` (
   `id` INT(11) NOT NULL,
   `full_name` VARCHAR(100) NOT NULL,
-  `country` VARCHAR(45) NOT NULL,
+  `country` VARCHAR(45) NULL DEFAULT NULL,
   `sport_club` VARCHAR(75) NULL DEFAULT NULL,
-  PRIMARY KEY (`id`))
+  `profile_id` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_players_profile1_idx` (`profile_id` ASC) VISIBLE,
+  CONSTRAINT `fk_players_profile1`
+    FOREIGN KEY (`profile_id`)
+    REFERENCES `match_score_project`.`profile` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
 
@@ -163,27 +184,6 @@ CREATE TABLE IF NOT EXISTS `match_score_project`.`tournaments_has_players` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
-
-
--- -----------------------------------------------------
--- Table `match_score_project`.`profile`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `match_score_project`.`profile` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `registered_users_id` INT(11) NOT NULL,
-  `tournament_won` INT NULL,
-  `tournamen_played` INT NULL,
-  `matches_won` INT NULL,
-  `matches_played` VARCHAR(45) NULL,
-  `matches_lost` VARCHAR(45) NULL,
-  PRIMARY KEY (`id`),
-  INDEX `fk_profile_registered_users1_idx` (`registered_users_id` ASC) VISIBLE,
-  CONSTRAINT `fk_profile_registered_users1`
-    FOREIGN KEY (`registered_users_id`)
-    REFERENCES `match_score_project`.`registered_users` (`id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
