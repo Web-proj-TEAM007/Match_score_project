@@ -81,6 +81,17 @@ DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
+-- Table `match_score_project`.`match_result`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `match_score_project`.`match_result` (
+  `id` INT NOT NULL,
+  `player_won` INT NULL,
+  `player_lost` INT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `match_score_project`.`matches`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `match_score_project`.`matches` (
@@ -90,11 +101,18 @@ CREATE TABLE IF NOT EXISTS `match_score_project`.`matches` (
   `time_limit` DATETIME NULL DEFAULT NULL,
   `score_limit` INT(11) NULL DEFAULT NULL,
   `tournaments_id` INT(11) NOT NULL,
+  `match_result_id` INT NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_matches_tournaments1_idx` (`tournaments_id` ASC) VISIBLE,
+  INDEX `fk_matches_match_result1_idx` (`match_result_id` ASC) VISIBLE,
   CONSTRAINT `fk_matches_tournaments1`
     FOREIGN KEY (`tournaments_id`)
     REFERENCES `match_score_project`.`tournaments` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_matches_match_result1`
+    FOREIGN KEY (`match_result_id`)
+    REFERENCES `match_score_project`.`match_result` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
@@ -145,6 +163,27 @@ CREATE TABLE IF NOT EXISTS `match_score_project`.`tournaments_has_players` (
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
+
+
+-- -----------------------------------------------------
+-- Table `match_score_project`.`profile`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `match_score_project`.`profile` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `registered_users_id` INT(11) NOT NULL,
+  `tournament_won` INT NULL,
+  `tournamen_played` INT NULL,
+  `matches_won` INT NULL,
+  `matches_played` VARCHAR(45) NULL,
+  `matches_lost` VARCHAR(45) NULL,
+  PRIMARY KEY (`id`),
+  INDEX `fk_profile_registered_users1_idx` (`registered_users_id` ASC) VISIBLE,
+  CONSTRAINT `fk_profile_registered_users1`
+    FOREIGN KEY (`registered_users_id`)
+    REFERENCES `match_score_project`.`registered_users` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
