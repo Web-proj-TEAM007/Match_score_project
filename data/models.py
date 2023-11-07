@@ -6,7 +6,7 @@ from datetime import datetime
 
 class Player(BaseModel):
     id: Optional[int]
-    full_name: constr(regex=r'^[a-zA-Z\s\-]+$')
+    full_name: constr(pattern=r'^[a-zA-Z\s\-]+$')
     country: str
     sport_club: str
 
@@ -64,3 +64,7 @@ class Match(BaseModel):
                    time_limit=time_limit,
                    score_limit=score_limit
                    )
+
+class League(BaseModel):
+    # requires scoring for loss, draw and, win
+    pass
