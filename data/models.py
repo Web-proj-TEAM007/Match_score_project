@@ -56,7 +56,7 @@ class Tournament(BaseModel):
     title: str
     tour_format: str
     prize: str
-    matches: Optional[list, Match]
+    matches: Optional[Match]
 
     @classmethod
     def from_query_result(cls, id, title, tour_format, prize):
@@ -71,7 +71,7 @@ class TournamentCreateModel(BaseModel):
     title: str
     tour_format: str
     prize: str
-    participants: list[Player.full_name]
+    participants: list[Player]
 
 
 class League(BaseModel):
