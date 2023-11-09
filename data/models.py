@@ -62,7 +62,7 @@ class Match(BaseModel):
         return cls(
             id=id,
             format=format,
-            date=check_date(date),
+            date=date,
             tourn_id=tourn_id)
 
 
