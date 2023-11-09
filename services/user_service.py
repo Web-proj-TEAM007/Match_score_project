@@ -39,17 +39,17 @@ def log_in(email: str, password: str):
         return BadRequest(f'Invalid login.')
     
 
-def profile(fullname: str, country: str, club: str):
-
-
+def profile(fullname: str, country: str, club: str = None):
 
     insert_query('''INSERT INTO players_profiles(full_name, country, club) VALUES(?,?,?)''',
                     (fullname, country, club))
 
-
 def email_exists(email: str | None = None) -> bool:
     if email:
         return any(read_query("SELECT 1 FROM users WHERE email = ?", (email,)))
+
+
+
     
 
 
