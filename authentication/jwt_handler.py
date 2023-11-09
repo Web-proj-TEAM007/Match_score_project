@@ -16,9 +16,8 @@ def token_response(token: str):
 
 
 # Create a JWT token
-def sign_jwt(username: str, user_email: str):
+def sign_jwt( user_email: str):
     payload = {
-        "username": username,
         "user_email": user_email,
         "date_created": time.time(),
         "exp_date": time.time() + 60000000}
