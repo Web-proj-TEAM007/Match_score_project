@@ -81,3 +81,9 @@ def get_scheme_format(players_count):
         return 'eight-finals'
     else:
         return 'Poveche nedavam'
+
+def tourn_exists(tourn_id: int) -> bool:
+
+    return any(
+        read_query(
+            '''SELECT 1 FROM tournaments WHERE id = ?''', (tourn_id,)))
