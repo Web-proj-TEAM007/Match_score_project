@@ -52,27 +52,17 @@ class User(BaseModel):
 
 
 class Match(BaseModel):
-    id: Optional[int]
+    id: int | None = None
+    format: str
     date: datetime
-    match_format: str
-    time_limit: Optional[datetime]
-    score_limit: Optional[int]
-
-    @classmethod
-    def from_query_result(cls, id, date, format, time_limit, score_limit):
-        return cls(id=id,
-                   date=date,
-                   format=match_format_validator(format),
-                   time_limit=time_limit,
-                   score_limit=score_limit
-                   )
+    tourn_id: int
 
 
 class Tournament(BaseModel):
     id: Optional[int]
     title: str
     tour_format: str
-    prize: str
+    prize: int
     matches: Optional[Match]
     participant: list[str]
     start_date: Optional[datetime]
@@ -89,7 +79,7 @@ class Tournament(BaseModel):
 class TournamentCreateModel(BaseModel):
     title: str
     tour_format: str
-    prize: str
+    prize: int
     participants: list[Player]
 
 
