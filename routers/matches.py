@@ -20,11 +20,14 @@ def get_all_matches(sort_by_date: datetime = Query(None, description='Filter by 
     return matches
 
 
-@match_serivce.post("/")
-def create_match(create_match: Match, token: str = Depends(JWTBearer())):
-    """Enter the needed requirements for the match to be created"""
-    # user = get_user_from_token(token)
-    # if user.is_director:
-    match = match_serivce.create_match(create_match)
-    return match
-#
+@match_router.get('/{match_id}')
+def get_match_by_id(match_id: int):
+    pass
+
+# @match_serivce.post("/")
+# def create_match(create_match: Match, token: str = Depends(JWTBearer())):
+#     """Enter the needed requirements for the match to be created"""
+#     # user = get_user_from_token(token)
+#     # if user.is_director:
+#     match = match_serivce.create_match(create_match)
+#     return match
