@@ -50,7 +50,7 @@ DEFAULT CHARACTER SET = latin1;
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`matches` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `format` VARCHAR(45) NOT NULL,
-  `date` DATETIME NOT NULL,
+  `date` DATETIME NULL,
   `tournament_id` INT(11) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_matches_tournaments1_idx` (`tournament_id` ASC) VISIBLE,
