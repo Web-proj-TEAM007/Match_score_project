@@ -54,7 +54,7 @@ class User(BaseModel):
 class Match(BaseModel):
     id: int | None = None
     format: str
-    date: datetime
+    date: datetime | str = 'not set yet'
     tourn_id: int
 
     @classmethod
