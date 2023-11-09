@@ -7,7 +7,7 @@ from datetime import datetime
 class Player(BaseModel):
     full_name: constr(pattern=r'^[a-zA-Z\s\-]+$')
     country: Optional[str]
-    sport_club: Optional[str]
+    sport_club: Optional[str] = None
 
     @classmethod
     def from_query_result(cls, id, full_name, country, sport_club):
