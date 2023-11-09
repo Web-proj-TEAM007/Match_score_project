@@ -14,3 +14,8 @@ def create_match(match):
                                     (date, match_format, game_format))
     match.id = generated_id
     return match
+
+
+def get_matches_for_tournament(tour_id):
+    # ---- To Shahin: Will need this function to properly return tournaments
+    pass
