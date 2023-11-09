@@ -57,6 +57,8 @@ class Tournament(BaseModel):
     tour_format: str
     prize: str
     matches: Optional[Match]
+    participant: list[str]
+    start_date: Optional[datetime]
 
     @classmethod
     def from_query_result(cls, id, title, tour_format, prize):
@@ -77,3 +79,8 @@ class TournamentCreateModel(BaseModel):
 class League(BaseModel):
     # requires scoring for loss, draw and, win
     pass
+
+
+class UpdateParticipantModel(BaseModel):
+    old_player: str
+    new_player: str
