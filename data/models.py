@@ -5,7 +5,6 @@ from datetime import datetime
 
 
 class Player(BaseModel):
-    id: Optional[int]
     full_name: constr(pattern=r'^[a-zA-Z\s\-]+$')
     country: Optional[str]
     sport_club: Optional[str]
@@ -20,18 +19,36 @@ class Player(BaseModel):
 
 
 class RegisterUser(BaseModel):
-    id: Optional[int]
     email: EmailStr
     password: str
-    players: list[Player]
+    
+    @classmethod
+    def from_query_result(cls, email, password):
+        return cls(email=email,
+                   password=password,
+                   )
+    
+class LoginData(BaseModel):
+    email: EmailStr
+    password: str
+
+class User(BaseModel):
+    id: int
+    email: str
+    password: str
+    user_role: str
+    
+
 
     @classmethod
-    def from_query_result(cls, id, email, password, players):
+    def from_query_result(cls, id, email, password, user_role,):
         return cls(id=id,
                    email=email,
                    password=password,
-                   players=players,
+                   user_role=user_role,
                    )
+    
+
 
 
 class Match(BaseModel):
