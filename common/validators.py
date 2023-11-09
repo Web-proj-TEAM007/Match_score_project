@@ -14,3 +14,9 @@ def match_format_validator(match_format: str):
     if match_format not in _MATCH_FORMATS:
         return BadRequest(f"Invalid format: {match_format}, Option must be 'Time limited' or 'Score limited'")
     return match_format
+
+def check_date(date):
+
+    if date == 'null':
+        return 'not set yet'
+    return date
