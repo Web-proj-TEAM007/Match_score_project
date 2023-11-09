@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, constr
 from typing import Optional
-from common.validators import tournament_format_validator, match_format_validator
+from common.validators import tournament_format_validator, match_format_validator, check_date
 from datetime import datetime
 
 
@@ -52,27 +52,25 @@ class User(BaseModel):
 
 
 class Match(BaseModel):
-    id: Optional[int]
-    date: datetime
-    match_format: str
-    time_limit: Optional[datetime]
-    score_limit: Optional[int]
+    id: int | None = None
+    format: str
+    date: datetime | str = 'not set yet'
+    tourn_id: int
 
     @classmethod
-    def from_query_result(cls, id, date, format, time_limit, score_limit):
-        return cls(id=id,
-                   date=date,
-                   format=match_format_validator(format),
-                   time_limit=time_limit,
-                   score_limit=score_limit
-                   )
+    def from_query_result(cls, id, format, date, tourn_id):
+        return cls(
+            id=id,
+            format=format,
+            date=date,
+            tourn_id=tourn_id)
 
 
 class Tournament(BaseModel):
     id: Optional[int]
     title: str
     tour_format: str
-    prize: str
+    prize: int
     matches: Optional[Match]
     participant: list[str]
     start_date: Optional[datetime]
@@ -89,8 +87,8 @@ class Tournament(BaseModel):
 class TournamentCreateModel(BaseModel):
     title: str
     tour_format: str
-    prize: str
-    participants: list[Player]
+    prize: int
+    participants: list[str]
 
 
 class League(BaseModel):
