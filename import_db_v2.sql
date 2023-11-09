@@ -142,13 +142,13 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`users` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `email` TINYTEXT NOT NULL,
   `password` TINYTEXT NOT NULL,
-  `player_profile_id` INT(11) NULL,
+  `player_profilе_id` INT(11) NULL,
   `user_role` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `email_UNIQUE` USING HASH (`email`) VISIBLE,
-  INDEX `fk_users_players_profiles1_idx` (`player_profile_id` ASC) VISIBLE,
+  INDEX `fk_users_players_profiles1_idx` (`player_profilе_id` ASC) VISIBLE,
   CONSTRAINT `fk_users_players_profiles1`
-    FOREIGN KEY (`player_profile_id`)
+    FOREIGN KEY (`player_profilе_id`)
     REFERENCES `matchscore_db`.`players_profiles` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
