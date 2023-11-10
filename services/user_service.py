@@ -60,3 +60,9 @@ def player_profile_exists(full_name) -> bool:
 def create_player_statistic(player: Player):
     data = insert_query("INSERT INTO players_statistics(players_profiles_id) VALUES(?)", (player.id,))
     return data
+
+
+def get_player_profile_by_id(profile_id: int):
+    data = read_query("SELECT id, full_name, country, club FROM players_profiles WHERE id = ?", (profile_id,))
+    player = next((Player.from_query_result(*row) for row in data), None)
+    return player
