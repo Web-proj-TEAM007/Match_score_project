@@ -36,6 +36,7 @@ def create_tournament(tournament: TournamentCreateModel):
     # ------------------------------- waiting for player implementation -----------------------------------
     schema = tournaments_service.get_scheme_format(len(players))
     result = tournaments_service.generate_game_schema(players)
+    tournament = tournaments_service.create_tournament(tournament)
     if tournament.tour_format == "Knockout":
         #  --------- here we randomly assign every player to a match depending on the schema ----------
         # RETURN OF SCHEMA AND RESULT:
