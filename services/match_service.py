@@ -1,6 +1,7 @@
 from data.database import read_query, update_query, insert_query
 from data.models import Tournament, Player, Match
-from services.tournaments_service import get_tournament_title_by_id
+# from services.tournaments_service import get_tournament_title_by_id <-- You can get it from get_tournament_by_id and
+# then tournament.title
 
 
 # needed: format, date, tourn_id
