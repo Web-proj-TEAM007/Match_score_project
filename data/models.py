@@ -66,13 +66,19 @@ class Match(BaseModel):
             date=check_date(date),
             tourn_id=tourn_id)
 
+class MatchTournResponseMod(BaseModel):
+    id: int
+    player_1: str
+    player_2: str
+    date: datetime | str
+
 
 class Tournament(BaseModel):
     id: Optional[int] = None
     title: str
     tour_format: str
     prize: int
-    schema: str | None = None
+    scheme: str | None = None
     match_format: str | None = None
     participants: list[str] | None = None
     matches: Optional[Match] | None = None
