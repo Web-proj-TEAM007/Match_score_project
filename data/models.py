@@ -72,8 +72,10 @@ class Tournament(BaseModel):
     title: str
     tour_format: str
     prize: int
+    schema: str | None = None
+    match_format: str
+    participants: list[str] = None
     matches: Optional[Match] = None
-    participant: list[str] = None
     start_date: Optional[datetime] = None
 
     @classmethod
@@ -85,12 +87,13 @@ class Tournament(BaseModel):
                    )
 
 
-class TournamentCreateModel(BaseModel):
-    id: int | None = None
-    title: str
-    tour_format: str
-    prize: int
-    participants: list[str]
+# class TournamentCreateModel(BaseModel):
+#     id: int | None = None
+#     title: str
+#     tour_format: str
+#     prize: int
+#     participants: list[str]
+#     match_format: str
 
 
 class League(BaseModel):
