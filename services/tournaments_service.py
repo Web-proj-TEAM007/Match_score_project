@@ -30,7 +30,7 @@ def get_tournament_by_id(tour_id: int):
 
 
 def create_tournament(tournament: Tournament):
-    generated_id = generated_id = insert_query("INSERT INTO tournaments (format, title, prize) VALUES (?, ?, ?)",
+    generated_id = insert_query("INSERT INTO tournaments (format, title, prize) VALUES (?, ?, ?)",
                                                (tournament.tour_format, tournament.title, tournament.prize))
     tournament.id = generated_id
     return tournament
