@@ -117,12 +117,12 @@ DEFAULT CHARACTER SET = latin1;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_statistics` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `matches_won` INT(11) NULL,
-  `matches_lost` INT(11) NULL,
-  `tournaments_won` INT(11) NULL,
-  `tournaments_lost` INT(11) NULL,
-  `tournaments_played` INT(11) NULL,
-  `ratio` DECIMAL(2,0) NULL,
+  `matches_won` INT(11) NULL DEFAULT 0,
+  `matches_lost` INT(11) NULL DEFAULT 0,
+  `tournaments_won` INT(11) NULL DEFAULT 0,
+  `tournaments_lost` INT(11) NULL DEFAULT 0,
+  `tournaments_played` INT(11) NULL DEFAULT 0,
+  `ratio` DECIMAL(2,0) NULL DEFAULT 0,
   `players_profiles_id` INT(11) NOT NULL,
   PRIMARY KEY (`id`, `players_profiles_id`),
   INDEX `fk_players_statistics_players_profiles1_idx` (`players_profiles_id` ASC) VISIBLE,
