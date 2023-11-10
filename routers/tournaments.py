@@ -38,13 +38,14 @@ def create_tournament(tournament: Tournament):
     result = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
               tournament.participants if not user_service.player_profile_exists(name)]
     players = tournament.participants.copy()
-    schema = tournaments_service.get_scheme_format(len(tournament.participants))
-    result = tournaments_service.generate_game_schema(tournament.participants)
+    schema_t = tournaments_service.get_scheme_format(len(tournament.participants))
+    result = tournaments_service.generate_game_schema(tournament.participants) # Шахин: тука губиш participants, защото директно подаваш оригиналния лист и премахваш играчите във функцията.
     if tournament.tour_format == "Knockout":
-        created_tournament = tournaments_service.create_tournament(tournament)
-        knockout_match_schema = [match_service.create_match(created_tournament) for _ in result]
+        tournament.participants = players # Шахин: тука ги връщам обратно. Може да подаваш директно players или друг лист .copy() за да правиш промени в него, а не в оригиналния лист.
+        created_tournament = tournaments_service.create_tournament(tournament) 
+        knockout_match_schema = match_service.create_match(created_tournament) # Шахин: не итерирай тука, аз го правя във функцията, късно се усетих...
         created_tournament.matches = knockout_match_schema
-        created_tournament.schema = schema
+        created_tournament.scheme = schema_t
         created_tournament.match_format = tournament.match_format
         created_tournament.participants = players
         return created_tournament
