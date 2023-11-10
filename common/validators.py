@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from common.exceptions import BadRequest
 
 _TOURNAMENT_FORMATS = ('Knockout', 'League')
@@ -14,3 +16,9 @@ def match_format_validator(match_format: str):
     if match_format not in _MATCH_FORMATS:
         raise BadRequest(f"Invalid format: {match_format}, Option must be 'Time limited' or 'Score limited'")
     return match_format
+
+
+def check_date(date: str | datetime):
+    if date != datetime:
+        return 'not set yet'
+    return date
