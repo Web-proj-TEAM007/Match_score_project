@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, Depends, Path, Body, Response
-from data.models import Tournament, Match, TournamentCreateModel, Player, UpdateParticipantModel
+from data.models import Tournament, Match, Player, UpdateParticipantModel
 from common.validators import tournament_format_validator
 from common.exceptions import NoContent, NotFound, Unauthorized
 from services import tournaments_service, match_service, user_service
@@ -23,7 +23,7 @@ def get_all_tournaments(title: str = Query(None, description="Get tournament by 
 
 
 @tournaments_router.post("/")
-def create_tournament(tournament: TournamentCreateModel):
+def create_tournament(tournament: Tournament):
     # token: str = Depends(JWTBearer())): ----- Waiting for request implementation
     """Only director can create tournaments"""
     # ----------- check if user is authorized to create a tournament -------------------
@@ -31,12 +31,15 @@ def create_tournament(tournament: TournamentCreateModel):
     # if user.user_role != 'Director':     --------- Waiting for request implementation
     #     raise Unauthorized(detail='Only directors can create a tournament')
     # ---------- check if each player is already existing, if not create one and link it to profile --------
-    players = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
-               tournament.participants if not user_service.player_profile_exists(name)]
-    # ------------------------------- waiting for player implementation -----------------------------------
-    schema = tournaments_service.get_scheme_format(len(players))
-    result = tournaments_service.generate_game_schema(players)
-    tournament = tournaments_service.create_tournament(tournament)
+    if tournaments_service.tournament_exists(tournament.title):
+        # to make more adequate response
+        return Response(f'{tournament.title} already exists')
+    result = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
+              tournament.participants if not user_service.player_profile_exists(name)]
+    players = tournament.participants.copy()
+    schema = tournaments_service.get_scheme_format(len(tournament.participants))
+    result = tournaments_service.generate_game_schema(tournament.participants)
+
     if tournament.tour_format == "Knockout":
         #  --------- here we randomly assign every player to a match depending on the schema ----------
         # RETURN OF SCHEMA AND RESULT:
@@ -45,10 +48,16 @@ def create_tournament(tournament: TournamentCreateModel):
         #   'Player3'},{'first_player': 'Player7', 'second_player': 'Player6'},
         #   {'first_player': 'Player7', 'second_player': 'Player6'}]
         # ------------- further implementation of creating these matches ---------
-        knockout_schema = [match_service.create_match(match) for match in result]
-        return knockout_schema
+        created_tournament = tournaments_service.create_tournament(tournament)
+        knockout_match_schema = [match_service.create_match(created_tournament) for _ in result]
+        created_tournament.matches = knockout_match_schema
+        created_tournament.schema = schema
+        created_tournament.match_format = tournament.match_format
+        created_tournament.participants = players
+        return created_tournament
     elif tournament.tour_format == "League":
         pass
+    return tournament
 
 
 @tournaments_router.get("/{tournament-id}")
