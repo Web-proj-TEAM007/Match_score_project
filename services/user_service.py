@@ -58,7 +58,7 @@ def player_profile_exists(full_name) -> bool:
 
 
 def create_player_statistic(player: Player):
-    data = insert_query("INSERT INTO players_statistics(players_profiles_id) VALUES(?)", (player.id,))
+    data = insert_query("INSERT INTO players_statistics(player_profile_id) VALUES(?)", (player.id,))
     return data
 
 
