@@ -2,23 +2,23 @@ from fastapi import HTTPException
 
 
 class BadRequest(HTTPException):
-    def __init__(self, content=''):
-        super().__init__(status_code=400, content=content)
+    def __init__(self, detail=''):
+        super().__init__(status_code=400, detail=detail)
 
 
 class NotFound(HTTPException):
-    def __init__(self, content=''):
-        super().__init__(status_code=404, content=content)
+    def __init__(self, detail=''):
+        super().__init__(status_code=404, detail=detail)
 
 
 class Unauthorized(HTTPException):
-    def __init__(self, content=''):
-        super().__init__(status_code=403, content=content)
+    def __init__(self, detail=''):
+        super().__init__(status_code=403, detail=detail)
 
 
 class NoContent(HTTPException):
-    def __init__(self):
-        super().__init__(status_code=204)
+    def __init__(self, detail=''):
+        super().__init__(status_code=204, detail=detail)
 
 
 class InternalServerError(HTTPException):
