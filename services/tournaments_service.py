@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player
+from data.models import Tournament, Player, TournamentCreateModel
 import random
 from common.validators import tournament_format_validator
 
@@ -21,14 +21,21 @@ def get_all_tournaments(title, tour_format):
     return tournaments
 
 
-def get_tournament_by_id(tour_id):
+def get_tournament_by_id(tour_id: int):
     data = read_query('SELECT * FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
     return tournament
 
 
+def create_tournament(tournament: TournamentCreateModel):
+    generated_id = insert_query("INSERT INTO tournaments(format, title, prize), VALUES(?, ?, ?)",
+                                (tournament.tour_format, tournament.title, tournament.prize))
+    tournament.id = generated_id
+    return tournament
+
+
 # ------ this will be moved to a player_service most likely but for now is here to test tournaments get by id -----
-def get_tournament_participants(tour_id):
+def get_tournament_participants(tour_id: int):
     data = read_query('SELECT player_profile_id FROM tournaments_has_players_profile '
                       'WHERE tournament_id = ?', (tour_id,))
     participants = ((Player.from_query_result(*row) for row in data), None)
@@ -83,8 +90,8 @@ def get_scheme_format(players_count):
     else:
         return 'Poveche nedavam'
 
-def tourn_exists(tourn_id: int) -> bool:
 
+def tourn_exists(tourn_id: int) -> bool:
     return any(
         read_query(
             '''SELECT 1 FROM tournaments WHERE id = ?''', (tourn_id,)))
