@@ -38,7 +38,7 @@ def create_tournament(tournament: Tournament):
 
 # ------ this will be moved to a player_service most likely but for now is here to test tournaments get by id -----
 def get_tournament_participants(tour_id: int):
-    data = read_query('SELECT player_profile_id FROM tournaments_has_players_profile '
+    data = read_query('SELECT player_profile_id FROM tournaments_has_players_profiles '
                       'WHERE tournament_id = ?', (tour_id,))
     participants = ((Player.from_query_result(*row) for row in data), None)
     return participants
