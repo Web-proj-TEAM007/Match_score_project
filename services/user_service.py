@@ -2,7 +2,8 @@ import bcrypt
 from authentication.jwt_handler import sign_jwt
 from data.database import insert_query, read_query, update_query
 from common.exceptions import BadRequest
-from data.models import User
+from data.models import User, Player
+from typing import Optional
 
 
 def create_user(email: str, password: str):
@@ -37,22 +38,25 @@ def log_in(email: str, password: str):
         return sign_jwt(user.email)
     else:
         return BadRequest(f'Invalid login.')
-    
 
-def profile(fullname: str, country: str, club: str = None):
 
-    insert_query('''INSERT INTO players_profiles(full_name, country, club) VALUES(?,?,?)''',
-                    (fullname, country, club))
+def create_player_profile(full_name: str, country: Optional[str] = None, sport_club: Optional[str] = None):
+    generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club) VALUES(?,?,?)''',
+                                (full_name, country, sport_club))
+    player = Player(full_name=full_name, country=country, sport_club=sport_club)
+    player.id = generated_id
+    return player
+
 
 def email_exists(email: str | None = None) -> bool:
     if email:
         return any(read_query("SELECT 1 FROM users WHERE email = ?", (email,)))
 
 
-
-    
-
-
+def player_profile_exists(full_name) -> bool:
+    return any(read_query("SELECT 1 FROM players_profiles WHERE full_name = ?", (full_name,)))
 
 
-
+def create_player_statistic(player: Player):
+    data = insert_query("INSERT INTO players_statistics(players_profiles_id) VALUES(?)", (player.id,))
+    return data

@@ -1,12 +1,13 @@
 from pydantic import BaseModel, EmailStr, constr
 from typing import Optional
-from common.validators import tournament_format_validator, match_format_validator, check_date
+from common.validators import tournament_format_validator, match_format_validator
 from datetime import datetime
 
 
 class Player(BaseModel):
+    id: Optional[int] = None
     full_name: constr(pattern=r'^[a-zA-Z\s\-]+$')
-    country: Optional[str]
+    country: Optional[str] = None
     sport_club: Optional[str] = None
 
     @classmethod
@@ -19,36 +20,36 @@ class Player(BaseModel):
 
 
 class RegisterUser(BaseModel):
+    id: Optional[int]
     email: EmailStr
     password: str
-    
+
     @classmethod
-    def from_query_result(cls, email, password):
-        return cls(email=email,
+    def from_query_result(cls, id, email, password):
+        return cls(id=id,
+                   email=email,
                    password=password,
                    )
-    
+
+
 class LoginData(BaseModel):
     email: EmailStr
     password: str
+
 
 class User(BaseModel):
     id: int
     email: str
     password: str
     user_role: str
-    
-
 
     @classmethod
-    def from_query_result(cls, id, email, password, user_role,):
+    def from_query_result(cls, id, email, password, user_role, ):
         return cls(id=id,
                    email=email,
                    password=password,
                    user_role=user_role,
                    )
-    
-
 
 
 class Match(BaseModel):

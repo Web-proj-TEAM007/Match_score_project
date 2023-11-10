@@ -1,6 +1,7 @@
 from data.database import read_query, update_query, insert_query
 from data.models import Tournament, Player
 import random
+from common.validators import tournament_format_validator
 
 
 def get_all_tournaments(title, tour_format):
@@ -12,7 +13,7 @@ def get_all_tournaments(title, tour_format):
         params.append(title)
     if tour_format:
         where_clauses.append("format = ?")
-        params.append(tour_format)
+        params.append(tournament_format_validator(tour_format))
     if where_clauses:
         query += " WHERE " + " AND ".join(where_clauses)
     data = read_query(query, params)
