@@ -69,19 +69,19 @@ DEFAULT CHARACTER SET = latin1;
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`match_scores` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `matches_id` INT(11) NOT NULL,
-  `player_1_score` INT(11) NOT NULL,
-  `player_2_score` INT(11) NOT NULL,
-  `players_profiles_id` INT(11) NOT NULL,
-  PRIMARY KEY (`id`, `players_profiles_id`),
+  `player_1_score` INT(11) NULL DEFAULT 0,
+  `player_2_score` INT(11) NULL DEFAULT 0,
+  `player_id_won` INT(11) NULL,
+  PRIMARY KEY (`id`),
   INDEX `fk_score_matches1_idx` (`matches_id` ASC) VISIBLE,
-  INDEX `fk_match_scores_players_profiles1_idx` (`players_profiles_id` ASC) VISIBLE,
+  INDEX `fk_match_scores_players_profiles1_idx` (`player_id_won` ASC) VISIBLE,
   CONSTRAINT `fk_score_matches1`
     FOREIGN KEY (`matches_id`)
     REFERENCES `matchscore_db`.`matches` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_match_scores_players_profiles1`
-    FOREIGN KEY (`players_profiles_id`)
+    FOREIGN KEY (`player_id_won`)
     REFERENCES `matchscore_db`.`players_profiles` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
@@ -117,17 +117,17 @@ DEFAULT CHARACTER SET = latin1;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_statistics` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `player_profile_id` INT(11) NOT NULL,
   `matches_won` INT(11) NULL DEFAULT 0,
   `matches_lost` INT(11) NULL DEFAULT 0,
   `tournaments_won` INT(11) NULL DEFAULT 0,
   `tournaments_lost` INT(11) NULL DEFAULT 0,
   `tournaments_played` INT(11) NULL DEFAULT 0,
   `ratio` DECIMAL(2,0) NULL DEFAULT 0,
-  `players_profiles_id` INT(11) NOT NULL,
-  PRIMARY KEY (`id`, `players_profiles_id`),
-  INDEX `fk_players_statistics_players_profiles1_idx` (`players_profiles_id` ASC) VISIBLE,
+  PRIMARY KEY (`id`),
+  INDEX `fk_players_statistics_players_profiles1_idx` (`player_profile_id` ASC) VISIBLE,
   CONSTRAINT `fk_players_statistics_players_profiles1`
-    FOREIGN KEY (`players_profiles_id`)
+    FOREIGN KEY (`player_profile_id`)
     REFERENCES `matchscore_db`.`players_profiles` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
@@ -142,13 +142,13 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`users` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `email` TINYTEXT NOT NULL,
   `password` TINYTEXT NOT NULL,
+  `player_profile_id` INT(11) NULL,
   `user_role` VARCHAR(45) NOT NULL,
-  `players_profiles_id` INT(11) NOT NULL,
-  PRIMARY KEY (`id`, `players_profiles_id`),
+  PRIMARY KEY (`id`),
   UNIQUE INDEX `email_UNIQUE` USING HASH (`email`) VISIBLE,
-  INDEX `fk_users_players_profiles1_idx` (`players_profiles_id` ASC) VISIBLE,
+  INDEX `fk_users_players_profiles1_idx` (`player_profile_id` ASC) VISIBLE,
   CONSTRAINT `fk_users_players_profiles1`
-    FOREIGN KEY (`players_profiles_id`)
+    FOREIGN KEY (`player_profile_id`)
     REFERENCES `matchscore_db`.`players_profiles` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
@@ -163,17 +163,17 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`requests` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `request` VARCHAR(45) NOT NULL,
   `user_id` INT(11) NOT NULL,
-  `players_profiles_id` INT(11) NOT NULL,
-  PRIMARY KEY (`id`, `players_profiles_id`),
+  `player_profile_id` INT(11) NOT NULL,
+  PRIMARY KEY (`id`),
   INDEX `fk_requests_users1_idx` (`user_id` ASC) VISIBLE,
-  INDEX `fk_requests_players_profiles1_idx` (`players_profiles_id` ASC) VISIBLE,
+  INDEX `fk_requests_players_profiles1_idx` (`player_profile_id` ASC) VISIBLE,
   CONSTRAINT `fk_requests_users1`
     FOREIGN KEY (`user_id`)
     REFERENCES `matchscore_db`.`users` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `fk_requests_players_profiles1`
-    FOREIGN KEY (`players_profiles_id`)
+    FOREIGN KEY (`player_profile_id`)
     REFERENCES `matchscore_db`.`players_profiles` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
