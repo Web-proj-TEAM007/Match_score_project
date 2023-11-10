@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, constr
 from typing import Optional
-from common.validators import tournament_format_validator, match_format_validator
+from common.validators import tournament_format_validator, match_format_validator, check_date
 from datetime import datetime
 
 
@@ -63,7 +63,7 @@ class Match(BaseModel):
         return cls(
             id=id,
             format=format,
-            date=date,
+            date=check_date(date),
             tourn_id=tourn_id)
 
 
@@ -73,9 +73,9 @@ class Tournament(BaseModel):
     tour_format: str
     prize: int
     schema: str | None = None
-    match_format: str
-    participants: list[str] = None
-    matches: Optional[Match] = None
+    match_format: str | None = None
+    participants: list[str] | None = None
+    matches: Optional[Match] | None = None
     start_date: Optional[datetime] = None
 
     @classmethod
