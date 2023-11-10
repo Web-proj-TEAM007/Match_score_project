@@ -68,13 +68,13 @@ class Match(BaseModel):
 
 
 class Tournament(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     title: str
     tour_format: str
     prize: int
-    matches: Optional[Match]
-    participant: list[str]
-    start_date: Optional[datetime]
+    matches: Optional[Match] = None
+    participant: list[str] = None
+    start_date: Optional[datetime] = None
 
     @classmethod
     def from_query_result(cls, id, title, tour_format, prize):
@@ -86,6 +86,7 @@ class Tournament(BaseModel):
 
 
 class TournamentCreateModel(BaseModel):
+    id: int | None = None
     title: str
     tour_format: str
     prize: int
