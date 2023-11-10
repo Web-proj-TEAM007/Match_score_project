@@ -18,19 +18,6 @@ CREATE SCHEMA IF NOT EXISTS `matchscore_db` DEFAULT CHARACTER SET latin1 ;
 USE `matchscore_db` ;
 
 -- -----------------------------------------------------
--- Table `matchscore_db`.`players_profiles`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_profiles` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `full_name` TINYTEXT NOT NULL,
-  `country` VARCHAR(45) NULL DEFAULT NULL,
-  `club` TINYTEXT NULL DEFAULT NULL,
-  PRIMARY KEY (`id`))
-ENGINE = InnoDB
-DEFAULT CHARACTER SET = latin1;
-
-
--- -----------------------------------------------------
 -- Table `matchscore_db`.`tournaments`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`tournaments` (
@@ -50,7 +37,7 @@ DEFAULT CHARACTER SET = latin1;
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`matches` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `format` VARCHAR(45) NOT NULL,
-  `date` DATETIME NULL,
+  `date` DATETIME NOT NULL,
   `tournament_id` INT(11) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_matches_tournaments1_idx` (`tournament_id` ASC) VISIBLE,
@@ -64,25 +51,38 @@ DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
+-- Table `matchscore_db`.`players_profiles`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_profiles` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `full_name` TINYTEXT NOT NULL,
+  `country` VARCHAR(45) NULL DEFAULT NULL,
+  `club` TINYTEXT NULL DEFAULT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = latin1;
+
+
+-- -----------------------------------------------------
 -- Table `matchscore_db`.`match_scores`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`match_scores` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
-  `match_id` INT(11) NOT NULL,
-  `player_1_score` INT(11) NOT NULL,
-  `player_2_score` INT(11) NOT NULL,
-  `player_id_won` INT(11) NOT NULL,
+  `matches_id` INT(11) NOT NULL,
+  `player_1_score` INT(11) NULL DEFAULT 0,
+  `player_2_score` INT(11) NULL DEFAULT 0,
+  `player_id_won` INT(11) NULL,
   PRIMARY KEY (`id`),
-  INDEX `fk_score_players_profiles1_idx` (`player_id_won` ASC) VISIBLE,
-  INDEX `fk_match_scores_matches1_idx` (`match_id` ASC) VISIBLE,
-  CONSTRAINT `fk_score_players_profiles1`
-    FOREIGN KEY (`player_id_won`)
-    REFERENCES `matchscore_db`.`players_profiles` (`id`)
+  INDEX `fk_score_matches1_idx` (`matches_id` ASC) VISIBLE,
+  INDEX `fk_match_scores_players_profiles1_idx` (`player_id_won` ASC) VISIBLE,
+  CONSTRAINT `fk_score_matches1`
+    FOREIGN KEY (`matches_id`)
+    REFERENCES `matchscore_db`.`matches` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
-  CONSTRAINT `fk_match_scores_matches1`
-    FOREIGN KEY (`match_id`)
-    REFERENCES `matchscore_db`.`matches` (`id`)
+  CONSTRAINT `fk_match_scores_players_profiles1`
+    FOREIGN KEY (`player_id_won`)
+    REFERENCES `matchscore_db`.`players_profiles` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
@@ -118,12 +118,12 @@ DEFAULT CHARACTER SET = latin1;
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_statistics` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `player_profile_id` INT(11) NOT NULL,
-  `matches_won` INT(11) NOT NULL,
-  `matches_lost` INT(11) NOT NULL,
-  `tournaments_won` INT(11) NOT NULL,
-  `tournaments_lost` INT(11) NOT NULL,
-  `tournaments_played` INT(11) NOT NULL,
-  `ratio` DECIMAL(2,0) NOT NULL,
+  `matches_won` INT(11) NULL DEFAULT 0,
+  `matches_lost` INT(11) NULL DEFAULT 0,
+  `tournaments_won` INT(11) NULL DEFAULT 0,
+  `tournaments_lost` INT(11) NULL DEFAULT 0,
+  `tournaments_played` INT(11) NULL DEFAULT 0,
+  `ratio` DECIMAL(2,0) NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   INDEX `fk_players_statistics_players_profiles1_idx` (`player_profile_id` ASC) VISIBLE,
   CONSTRAINT `fk_players_statistics_players_profiles1`
@@ -167,14 +167,14 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`requests` (
   PRIMARY KEY (`id`),
   INDEX `fk_requests_users1_idx` (`user_id` ASC) VISIBLE,
   INDEX `fk_requests_players_profiles1_idx` (`player_profile_id` ASC) VISIBLE,
-  CONSTRAINT `fk_requests_players_profiles1`
-    FOREIGN KEY (`player_profile_id`)
-    REFERENCES `matchscore_db`.`players_profiles` (`id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
   CONSTRAINT `fk_requests_users1`
     FOREIGN KEY (`user_id`)
     REFERENCES `matchscore_db`.`users` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_requests_players_profiles1`
+    FOREIGN KEY (`player_profile_id`)
+    REFERENCES `matchscore_db`.`players_profiles` (`id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
