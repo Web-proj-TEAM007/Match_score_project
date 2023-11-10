@@ -18,8 +18,9 @@ def get_all_tournaments(title: str = Query(None, description="Get tournament by 
     if not tournaments:
         return Response(status_code=204, headers={'detail': 'No available tournaments'})
     # ---------------- Add all matches for the specific tournament -------------------
-    result = [match_service.get_matches_for_tournament(tour.id) for tour in tournaments]
-    return result
+    for tour in tournaments:
+        tour.matches = match_service.get_matches_for_tournament(tour.id)
+    return tournaments
 
 
 @tournaments_router.post("/")
@@ -39,15 +40,7 @@ def create_tournament(tournament: Tournament):
     players = tournament.participants.copy()
     schema = tournaments_service.get_scheme_format(len(tournament.participants))
     result = tournaments_service.generate_game_schema(tournament.participants)
-
     if tournament.tour_format == "Knockout":
-        #  --------- here we randomly assign every player to a match depending on the schema ----------
-        # RETURN OF SCHEMA AND RESULT:
-        #   eight-finals
-        #   [{'first_player': 'Player5', 'second_player': 'Player3'}, {'first_player': 'Player5','second_player':
-        #   'Player3'},{'first_player': 'Player7', 'second_player': 'Player6'},
-        #   {'first_player': 'Player7', 'second_player': 'Player6'}]
-        # ------------- further implementation of creating these matches ---------
         created_tournament = tournaments_service.create_tournament(tournament)
         knockout_match_schema = [match_service.create_match(created_tournament) for _ in result]
         created_tournament.matches = knockout_match_schema
@@ -60,14 +53,16 @@ def create_tournament(tournament: Tournament):
     return tournament
 
 
-@tournaments_router.get("/{tournament-id}")
-def get_tournament_by_id(tour_id: int = Path(..., description='Enter desired tournament id')):
-    tournament = tournaments_service.get_tournament_by_id(tour_id)
+@tournaments_router.get("/{id}")
+def get_tournament_by_id(tournament_id: int = Query(..., description='Enter desired tournament id')):
+    tournament = tournaments_service.get_tournament_by_id(tournament_id)
+    if not tournament:
+        raise NotFound(detail='No such tournament')
+    tournament.matches = match_service.get_matches_for_tournament(tournament.id)
+    tournament.participants = tournaments_service.get_tournament_participants(tournament.id)
+    return tournament
     # here will need to see how the matches are returned so i can make tournament start date by the first match that is
     # going to be played that day
-    tournament.matches = match_service.get_matches_for_tournament(tournament.id)
-    tournament.participant = tournaments_service.get_tournament_participants(tournament.id)
-    return tournament
 
 
 @tournaments_router.patch("/manage-event/{tournament-id}")
