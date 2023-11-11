@@ -22,7 +22,12 @@ def get_all_matches(sort_by_date: datetime = Query(None, description='Filter by 
 
 @match_router.get('/{match_id}')
 def get_match_by_id(match_id: int):
-    pass
+
+    ans = match_service.match_exists(match_id)
+    if not ans:
+        return NotFound(f'Match #{match_id} not found.')
+
+    return match_service.get_match_by_id(match_id)
 
 # @match_serivce.post("/")
 # def create_match(create_match: Match, token: str = Depends(JWTBearer())):
