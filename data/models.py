@@ -80,6 +80,13 @@ class MatchResponseMod(BaseModel):
     player_2: str
     date: datetime | str
 
+class SetMatchScoreMod(BaseModel):
+    tourn_id: int
+    pl_1_id: int
+    pl_1_score: int
+    pl_2_id: int
+    pl_2_score: int
+    match_finished: bool
 
 class Tournament(BaseModel):
     id: Optional[int] = None
