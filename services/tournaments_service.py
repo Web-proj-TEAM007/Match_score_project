@@ -26,12 +26,14 @@ def get_all_tournaments(title, tour_format):
 def get_tournament_by_id(tour_id: int):
     data = read_query('SELECT * FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
+    participants = get_tournament_participants(tournament.id)
+    tournament.scheme_format = get_scheme_format(len(participants))
     return tournament
 
 
 def create_tournament(tournament: Tournament):
     generated_id = insert_query("INSERT INTO tournaments (format, title, prize) VALUES (?, ?, ?)",
-                                               (tournament.tour_format, tournament.title, tournament.prize))
+                                (tournament.tour_format, tournament.title, tournament.prize))
     tournament.id = generated_id
     return tournament
 
@@ -74,7 +76,6 @@ def generate_game_schema(players):
     match_players.extend(generate_game_schema(players))
     return match_players
 # output : [['Player1', 'Player4'], ['Player2', 'Player3']]
-
 
 
 def get_scheme_format(players_count):
