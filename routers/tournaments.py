@@ -31,26 +31,30 @@ def create_tournament(tournament: Tournament):
     # user = get_user_from_token(token)
     # if user.user_role != 'Director':     --------- Waiting for request implementation
     #     raise Unauthorized(detail='Only directors can create a tournament')
-    # ---------- check if each player is already existing, if not create one and link it to profile --------
+    # ----------- check if tournament already exists ---------------------------
     if tournaments_service.tournament_exists(tournament.title):
-        # to make more adequate response
         return Response(f'{tournament.title} already exists')
-    result = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
-              tournament.participants if not user_service.player_profile_exists(name)]
+    # ---------- check if each player is already existing, if not create one and link it to profile --------
+    _ = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
+         tournament.participants if not user_service.player_profile_exists(name)]
+    # ---- make a variable players which get participants, when inserted in generate_game_schema the func empty it.--
     players = tournament.participants.copy()
-    schema_t = tournaments_service.get_scheme_format(len(tournament.participants))
-    result = tournaments_service.generate_game_schema(tournament.participants) # Шахин: тука губиш participants, защото директно подаваш оригиналния лист и премахваш играчите във функцията.
+    # ----- get the format which is for e.g. 'semi-final' etc. (Which will be good to go to match service and change it
+    # everytime the matches change) --------
+    tournament.scheme_format = tournaments_service.get_scheme_format(len(tournament.participants))
+    # ----- this return dict of all player which are randomly separated by couples
+    generated_players_schema = tournaments_service.generate_game_schema(players)
     if tournament.tour_format == "Knockout":
-        tournament.participants = players # Шахин: тука ги връщам обратно. Може да подаваш директно players или друг лист .copy() за да правиш промени в него, а не в оригиналния лист.
-        created_tournament = tournaments_service.create_tournament(tournament) 
-        knockout_match_schema = match_service.create_match(created_tournament) # Шахин: не итерирай тука, аз го правя във функцията, късно се усетих...
-        created_tournament.matches = knockout_match_schema
-        created_tournament.scheme = schema_t
-        created_tournament.match_format = tournament.match_format
-        created_tournament.participants = players
-        return created_tournament
+        tournament.tour_format = "Knockout"
     elif tournament.tour_format == "League":
-        pass
+        tournament.tour_format = "League"
+    # ---- creating tournament in the db -------
+    tournament = tournaments_service.create_tournament(tournament)
+    # match_schema = match_service.create_match(tournament)
+    # ----- create a list of all matches in the tournament ----
+    match_schema = match_service.create_match_v2(tournament, generated_players_schema)
+    # assign them to the object attribute and return it
+    tournament.matches = match_schema
     return tournament
 
 
