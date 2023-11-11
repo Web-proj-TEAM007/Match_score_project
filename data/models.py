@@ -66,6 +66,7 @@ class Match(BaseModel):
             date=check_date(date),
             tourn_id=tourn_id)
 
+
 class MatchTournResponseMod(BaseModel):
     id: int
     player_1: str
@@ -85,10 +86,10 @@ class Tournament(BaseModel):
     start_date: Optional[datetime] = None
 
     @classmethod
-    def from_query_result(cls, id, title, tour_format, prize):
+    def from_query_result(cls, id, tour_format, title, prize):
         return cls(id=id,
-                   title=title,
                    tour_format=tour_format,
+                   title=title,
                    prize=prize,
                    )
 
