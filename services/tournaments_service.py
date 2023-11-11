@@ -70,9 +70,11 @@ def generate_game_schema(players):
     players.remove(first_match_player1)
     first_match_player2 = random.choice(players)
     players.remove(first_match_player2)
-    match_players.append({'first_player': first_match_player1, 'second_player': first_match_player2})
+    match_players.append([first_match_player1, first_match_player2])
     match_players.extend(generate_game_schema(players))
     return match_players
+# output : [['Player1', 'Player4'], ['Player2', 'Player3']]
+
 
 
 def get_scheme_format(players_count):
