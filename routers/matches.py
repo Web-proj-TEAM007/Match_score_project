@@ -4,7 +4,7 @@ from services import tournaments_service, match_service
 from common.exceptions import NoContent, NotFound, BadRequest
 from authentication.jwt_bearer import JWTBearer
 # from authentication.auth import get_user_from_token
-from data.models import Match, Tournament
+from data.models import Match, Tournament, SetMatchScoreMod
 
 match_router = APIRouter(prefix='/matches')
 
@@ -30,13 +30,9 @@ def get_match_by_id(match_id: int):
     return match_service.get_match_by_id(match_id)
 
 @match_router.put('/{match_id}')
-def set_match_score(match_id: int, pl_ids_scores: dict):
-    # Example input below (should enter it in the body):
-        # players_and_scores = {
-        #     "pl_1_id" : "score here",
-        #     "pl_2_id" : "score here",
-        #      "winner": "pl_id here"} --> if match ended, type winner here
-    match_service.change_match_score(match_id, pl_ids_scores)
+def set_match_score(match_id: int, match_score: SetMatchScoreMod):
+
+    match_service.change_match_score(match_id, match_score)
     return Response(status_code=200, content='Score changed successfully')
 
 
