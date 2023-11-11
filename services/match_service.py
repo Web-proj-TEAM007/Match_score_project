@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod
+from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod
 
 
 # from services.tournaments_service import get_tournament_title_by_id <-- You can get it from get_tournament_by_id and
@@ -111,26 +111,17 @@ def get_participants_ids(participants: list[str]) -> list[int]:
     return players_ids
 
 
-def change_match_score(match_id: int, players_and_scores: dict) -> None:
-    # Example input below (should enter it in the body):
-        # players_and_scores = {
-        #     "pl_1_id" : "score here",
-        #     "pl_2_id" : "score here",
-        #      "winner": "pl_id here"} --> if match ended, type winner here
+def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None:
     
-    pl_ids = players_and_scores.keys()
-    scores = players_and_scores.values()
-    pl_1_id = pl_ids[0][0]
-    pl_2_id = pl_ids[0][1]
-    pl_1_score = scores[0][0]
-    pl_2_score = scores[0][1]
+    pl_1_id = match_score.pl_1_id
+    pl_2_id = match_score.pl_2_id
+    pl_1_score = match_score.pl_1_score
+    pl_2_score = match_score.pl_2_score
 
-    win_pl_id = None
-    if len(pl_ids) == 3:
-        win_pl_id = int(scores[0][-1])
+    match_status = match_score.match_finished
 
 
-    if win_pl_id is None:
+    if not match_status:
 
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?
@@ -138,23 +129,24 @@ def change_match_score(match_id: int, players_and_scores: dict) -> None:
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?
                         WHERE matches_id = ? and player_profile_id = ?''',(pl_2_score, match_id, pl_2_id))
-    elif int(win_pl_id) == int(pl_1_score):
+    elif pl_1_score > pl_2_score:
 
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?, win = 1
                         WHERE matches_id = ? and player_profile_id = ?''',(pl_1_score, match_id, pl_1_id))
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?, win = 0
+                        WHERE matches_id = ? and player_profile_id = ?''',(pl_2_score, match_id, pl_2_id))
+    elif pl_1_score < pl_2_score:
+
+        update_query('''UPDATE matches_has_players_profiles
+                        SET score = ?, win = 0
+                        WHERE matches_id = ? and player_profile_id = ?''',(pl_1_score, match_id, pl_1_id))
+        update_query('''UPDATE matches_has_players_profiles
+                        SET score = ?, win = 1
                         WHERE matches_id = ? and player_profile_id = ?''',(pl_2_score, match_id, pl_2_id))
     else:
-
-        update_query('''UPDATE matches_has_players_profiles
-                        SET score = ?, win = 0
-                        WHERE matches_id = ? and player_profile_id = ?''',(pl_1_score, match_id, pl_1_id))
-        update_query('''UPDATE matches_has_players_profiles
-                        SET score = ?, win = 1
-                        WHERE matches_id = ? and player_profile_id = ?''',(pl_2_score, match_id, pl_2_id))
-
+        raise ValueError('Мача e X, кво праим?')
 
 
 def get_matches_for_tournament(tournament_id: int):
