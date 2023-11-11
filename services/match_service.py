@@ -111,6 +111,52 @@ def get_participants_ids(participants: list[str]) -> list[int]:
     return players_ids
 
 
+def change_match_score(match_id: int, players_and_scores: dict) -> None:
+    # Example input below (should enter it in the body):
+        # players_and_scores = {
+        #     "pl_1_id" : "score here",
+        #     "pl_2_id" : "score here",
+        #      "winner": "pl_id here"} --> if match ended, type winner here
+    
+    pl_ids = players_and_scores.keys()
+    scores = players_and_scores.values()
+    pl_1_id = pl_ids[0][0]
+    pl_2_id = pl_ids[0][1]
+    pl_1_score = scores[0][0]
+    pl_2_score = scores[0][1]
+
+    win_pl_id = None
+    if len(pl_ids) == 3:
+        win_pl_id = int(scores[0][-1])
+
+
+    if win_pl_id is None:
+
+        update_query('''UPDATE matches_has_players_profiles
+                        SET score = ?
+                        WHERE matches_id = ? and player_profile_id = ?''',(pl_1_score, match_id, pl_1_id))
+        update_query('''UPDATE matches_has_players_profiles
+                        SET score = ?
+                        WHERE matches_id = ? and player_profile_id = ?''',(pl_2_score, match_id, pl_2_id))
+    elif int(win_pl_id) == int(pl_1_score):
+
+        update_query('''UPDATE matches_has_players_profiles
+                        SET score = ?, win = 1
+                        WHERE matches_id = ? and player_profile_id = ?''',(pl_1_score, match_id, pl_1_id))
+        update_query('''UPDATE matches_has_players_profiles
+                        SET score = ?, win = 0
+                        WHERE matches_id = ? and player_profile_id = ?''',(pl_2_score, match_id, pl_2_id))
+    else:
+
+        update_query('''UPDATE matches_has_players_profiles
+                        SET score = ?, win = 0
+                        WHERE matches_id = ? and player_profile_id = ?''',(pl_1_score, match_id, pl_1_id))
+        update_query('''UPDATE matches_has_players_profiles
+                        SET score = ?, win = 1
+                        WHERE matches_id = ? and player_profile_id = ?''',(pl_2_score, match_id, pl_2_id))
+
+
+
 def get_matches_for_tournament(tournament_id: int):
     # ---- To Shahin: Will need this function to properly return tournaments
     data = read_query('''SELECT * FROM matches WHERE tournament_id = ?''', (tournament_id,))
