@@ -72,6 +72,13 @@ class MatchTournResponseMod(BaseModel):
     player_2: str
     date: datetime | str
 
+class MatchResponseMod(BaseModel):
+    id: int
+    tournament_title: str
+    player_1: str
+    player_2: str
+    date: datetime | str
+
 
 class Tournament(BaseModel):
     id: Optional[int] = None
