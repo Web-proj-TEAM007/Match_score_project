@@ -37,7 +37,7 @@ DEFAULT CHARACTER SET = latin1;
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`matches` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `format` VARCHAR(45) NOT NULL,
-  `date` DATETIME NOT NULL,
+  `date` DATETIME NULL,
   `tournament_id` INT(11) NOT NULL,
   PRIMARY KEY (`id`),
   INDEX `fk_matches_tournaments1_idx` (`tournament_id` ASC) VISIBLE,
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_profiles` (
   `club` TINYTEXT NULL DEFAULT NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB
-AUTO_INCREMENT = 3
+AUTO_INCREMENT = 9
 DEFAULT CHARACTER SET = latin1;
 
 
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`matches_has_players_profiles` (
   `matches_id` INT(11) NOT NULL,
   `player_profile_id` INT(11) NOT NULL,
   `score` INT NOT NULL,
-  `win` TINYINT NULL,
+  `win` TINYINT NULL DEFAULT NULL,
   PRIMARY KEY (`matches_id`, `player_profile_id`),
   INDEX `fk_matches_has_players_profiles_players_profiles1_idx` (`player_profile_id` ASC) VISIBLE,
   INDEX `fk_matches_has_players_profiles_matches1_idx` (`matches_id` ASC) VISIBLE,
