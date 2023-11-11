@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, Match, MatchTournResponseMod
+from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod
 
 
 # from services.tournaments_service import get_tournament_title_by_id <-- You can get it from get_tournament_by_id and
@@ -55,6 +55,31 @@ from data.models import Tournament, Player, Match, MatchTournResponseMod
 #
 #     return matches
 
+# matches_has_players_profiles
+
+def get_match_by_id(match_id: int):
+
+    data = read_query('''SELECT m.matches_id, t.title, pl.full_name, m.score, mt.date 
+                      FROM matches_has_players_profiles m, players_profiles pl
+                            JOIN matches mt ON mt.id = ?
+                            JOIN tournaments t ON t.id = mt.tournament_id
+                            WHERE m.matches_id = ? and m.player_profile_id = pl.id''', (match_id, match_id))
+
+    player_one = data[0][2] + ': ' + str(data[0][-2])
+    player_two = data[1][2] + ': ' + str(data[0][-2])
+    datee = data[0][-1]
+    tourn_title = data[0][1]
+    if datee is None:
+        datee = 'Not set yet'
+
+    d_match = MatchResponseMod(id=match_id, 
+                               tournament_title=tourn_title, 
+                               player_1=player_one, 
+                               player_2=player_two, 
+                               date=datee)
+
+    return d_match
+
 
 def create_match_v2(tournament: Tournament, players: list[list[str]]) -> list[MatchTournResponseMod]:
     matches = []
@@ -98,3 +123,10 @@ def match_exists(match_id: int) -> bool:
         read_query(
             '''SELECT 1 FROM matches WHERE id = ?''',
             (match_id,)))
+
+def check_match_finished(match_id: int) -> bool:
+
+    return any(
+        read_query(
+            '''SELECT 1 FROM matches_has_players_profiles 
+	WHERE matches_id = ? and win is not Null''', (match_id,)))
