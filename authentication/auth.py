@@ -5,6 +5,6 @@ from authentication.jwt_handler import decode_jwt
 
 def get_user_from_token(token: str) -> User:
     decoded_token = decode_jwt(token)
-    email = decoded_token.get("email")
+    email = decoded_token.get("user_email")
     user = email_exists(email)
     return user
