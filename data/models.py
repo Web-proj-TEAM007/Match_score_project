@@ -124,3 +124,18 @@ class League(BaseModel):
 class UpdateParticipantModel(BaseModel):
     old_player: str
     new_player: str
+
+class RequestsResponseModel(BaseModel):
+    id: int
+    request: str
+    user_id: int
+    
+
+    @classmethod
+    def from_query_result(cls, id, request, user_id):
+        return cls(id=id,
+                   request=request,
+                   user_id=user_id,
+                   
+                   )
+
