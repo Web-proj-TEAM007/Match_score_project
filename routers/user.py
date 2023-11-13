@@ -5,7 +5,7 @@ from data.models import RegisterUser, LoginData, Player
 from authentication.auth import get_user_from_token
 
 
-users_router = APIRouter(prefix='/users')
+users_router = APIRouter(prefix='/user')
 
 
 @users_router.post('/register')
@@ -21,9 +21,17 @@ def user_login(data: LoginData):
 
 @users_router.post('/profile')
 def create_profile(data: Player, token: str = Depends(JWTBearer())):
-    
-    user_service.profile(data.full_name, data.country, data.sport_club)
+
+    user = get_user_from_token(token)
+
+    user_service.create_player_profile(data.full_name, user.id, data.country, data.sport_club)
 
     return Response("Profile created successfuly")
 
+
+@users_router.post('/promote')
+def promote_to_director(token: str = Depends(JWTBearer())):
+    user = get_user_from_token(token)
+
+    return user_service.promotion(user.id)
 
