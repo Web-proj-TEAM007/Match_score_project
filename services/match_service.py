@@ -1,5 +1,6 @@
 from data.database import read_query, update_query, insert_query
 from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod
+from common.validators import check_date
 
 
 # from services.tournaments_service import get_tournament_title_by_id <-- You can get it from get_tournament_by_id and
@@ -69,8 +70,7 @@ def get_match_by_id(match_id: int):
     player_two = data[1][2] + ': ' + str(data[0][-2])
     datee = data[0][-1]
     tourn_title = data[0][1]
-    if datee is None:
-        datee = 'Not set yet'
+    datee = check_date(datee)
 
     d_match = MatchResponseMod(id=match_id, 
                                tournament_title=tourn_title, 
