@@ -140,3 +140,5 @@ class RequestsResponseModel(BaseModel):
                    
                    )
 
+class NewFase(BaseModel):
+    fase: str
