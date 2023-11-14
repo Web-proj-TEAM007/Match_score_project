@@ -3,9 +3,10 @@ from services import user_service
 from authentication.jwt_bearer import JWTBearer
 from data.models import RegisterUser, LoginData, Player
 from authentication.auth import get_user_from_token
+from common.exceptions import NotFound
 
 
-users_router = APIRouter(prefix='/user')
+users_router = APIRouter(prefix='/users')
 
 
 @users_router.post('/register')
@@ -35,3 +36,11 @@ def promote_to_director(token: str = Depends(JWTBearer())):
 
     return user_service.promotion(user.id)
 
+@users_router.put('/{user_id}')
+def change_user_role(user_id: int, new_role: str):
+
+    ans = user_service.user_exists(user_id)
+    if not ans:
+        raise NotFound(f'User #{user_id} not found.')
+    
+    return user_service.change_user_role(user_id, new_role)
