@@ -98,3 +98,8 @@ def get_scheme_format(players_count):
 
 def tournament_exists(tour_title: str) -> bool:
     return any(read_query('''SELECT 1 FROM tournaments WHERE title = ?''', (tour_title,)))
+
+def tourn_exists_by_id(tourn_id: int) -> bool:
+    return any(
+        read_query(
+            '''SELECT 1 FROM tournaments WHERE id = ?''', (tourn_id,)))
