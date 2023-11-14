@@ -86,8 +86,8 @@ def create_match_v2(tournament: Tournament, players: list[list[str]]) -> list[Ma
     # Randomly assigned players that come like argument from create_tournament
     # = [['Player1', 'Player4'], ['Player2', 'Player3']]
     for index in range(len(players)):  # We are taking each separate list in the list: ['Player1', 'Player4']
-        match_id = insert_query('''INSERT INTO matches(format, date, tournament_id)
-                              VALUES(?,?,?)''', (tournament.match_format, tournament.start_date, tournament.id))
+        match_id = insert_query('''INSERT INTO matches(format, date, tournament_id, match_fase)
+                              VALUES(?,?,?)''', (tournament.match_format, tournament.start_date, tournament.id, tournament.scheme_format))
         player1, player2 = players[index]  # eg. 'Player1', 'Player4'
         player1_id, player2_id = get_participants_ids(players[index])  # getting the ids
         insert_query('''INSERT INTO matches_has_players_profiles(matches_id, player_profile_id, score)
@@ -151,7 +151,7 @@ def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None:
 
 def get_matches_for_tournament(tournament_id: int):
     # ---- To Shahin: Will need this function to properly return tournaments
-    data = read_query('''SELECT * FROM matches WHERE tournament_id = ?''', (tournament_id,))
+    data = read_query('''SELECT id, format, date, tournament_id FROM matches WHERE tournament_id = ?''', (tournament_id,))
 
     return (Match.from_query_result(*row) for row in data)
 
