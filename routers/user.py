@@ -36,6 +36,14 @@ def promote_to_director(token: str = Depends(JWTBearer())):
 
     return user_service.promotion(user.id)
 
+@users_router.post('/request')
+def make_request(token: str = Depends(JWTBearer())):
+    
+    user = get_user_from_token(token)
+
+    return user_service.request(user.id)
+
+
 @users_router.put('/{user_id}')
 def change_user_role(user_id: int, new_role: str):
 

@@ -45,13 +45,10 @@ def log_in(email: str, password: str):
 
 
 def create_player_profile(full_name: str, user_id: int, country: Optional[str] = None,  sport_club: Optional[str] = None):
-    generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club) VALUES(?,?,?)''',
-                                (full_name, country, sport_club))
+    generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club, user_id) VALUES(?,?,?,?)''',
+                                (full_name, country, sport_club, user_id))
     player = Player(full_name=full_name, country=country, sport_club=sport_club)
     player.id = generated_id
-
-    insert_query('''INSERT INTO requests(request, user_id, player_profile_id) VALUES(?,?,?) ''',
-                        ("player profile", user_id, generated_id))
 
     return player
 
@@ -105,3 +102,18 @@ def change_user_role(user_id: int, new_role: str):
         return Response(status_code=200, content=f'User #{user_id} role updated to {new_role}.')
     else:
         raise BadRequest('Something went wrong.')
+
+
+def request(user_id):
+    
+    data = read_query('''SELECT id FROM players_profiles WHERE user_id = ?''',(user_id,))
+
+    player_profile_id = 0
+
+    for x in data:
+        player_profile_id = x[0]
+
+    update_query('''INSERT INTO requests(request, user_id, player_profile_id) VALUES(?,?,?) '''
+                 ,('player_profile link', user_id, player_profile_id))
+
+    return Response(status_code=200, content='Request sent')
