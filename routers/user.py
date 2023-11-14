@@ -25,7 +25,7 @@ def create_profile(data: Player, token: str = Depends(JWTBearer())):
 
     user = get_user_from_token(token)
 
-    user_service.create_player_profile(data.full_name, user.id, data.country, data.sport_club)
+    user_service.create_player_profile(data.full_name, data.country, data.sport_club)
 
     return Response("Profile created successfuly")
 
