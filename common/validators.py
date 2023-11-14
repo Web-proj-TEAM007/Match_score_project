@@ -22,3 +22,10 @@ def check_date(date: str | datetime):
     if date != datetime:
         return 'not set yet'
     return date
+
+def check_score(score: int | None):
+
+    if score is None:
+        return 0
+    else:
+        return score
