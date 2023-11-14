@@ -29,6 +29,15 @@ def get_match_by_id(match_id: int):
 
     return match_service.get_match_by_id(match_id)
 
+@match_router.get('/tournaments/{tourn_id}')
+def get_matches_by_tournament(tourn_id: int):
+
+    ans = tournaments_service.tourn_exists_by_id(tourn_id)
+    if not ans:
+        return NotFound(f'Tournament #{tourn_id} not found.')
+    
+    return match_service.get_matches_for_tournament(tourn_id)
+
 @match_router.put('/{match_id}')
 def set_match_score(match_id: int, match_score: SetMatchScoreMod):
 
