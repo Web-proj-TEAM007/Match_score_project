@@ -89,3 +89,19 @@ def promotion(user_id):
                         ("Director",user_id,))
     
     return Response(status_code=200, content='Request sent')
+
+def user_exists(user_id: int) -> bool:
+
+    return any(
+        read_query(
+            '''SELECT 1 FROM users
+            WHERE id = ?''', (user_id,)))
+
+def change_user_role(user_id: int, new_role: str):
+
+    ans = update_query('''UPDATE users SET user_role = ?
+                       WHERE id = ?''', (new_role, user_id))
+    if ans:
+        return Response(status_code=200, content=f'User #{user_id} role updated to {new_role}.')
+    else:
+        raise BadRequest('Something went wrong.')
