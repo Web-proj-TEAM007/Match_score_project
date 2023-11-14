@@ -45,8 +45,8 @@ def log_in(email: str, password: str):
 
 
 def create_player_profile(full_name: str, user_id: int, country: Optional[str] = None,  sport_club: Optional[str] = None):
-    generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club) VALUES(?,?,?)''',
-                                (full_name, country, sport_club))
+    generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club, user_id) VALUES(?,?,?)''',
+                                (full_name, country, sport_club, user_id))
     player = Player(full_name=full_name, country=country, sport_club=sport_club)
     player.id = generated_id
 
@@ -89,3 +89,7 @@ def promotion(user_id):
                         ("Director",user_id,))
     
     return Response(status_code=200, content='Request sent')
+
+
+def request():
+    pass

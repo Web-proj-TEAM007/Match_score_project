@@ -35,3 +35,7 @@ def promote_to_director(token: str = Depends(JWTBearer())):
 
     return user_service.promotion(user.id)
 
+@users_router.post('/user/request')
+def make_request(token: str = Depends(JWTBearer())):
+    pass
+
