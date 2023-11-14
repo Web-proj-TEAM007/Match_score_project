@@ -104,16 +104,9 @@ def change_user_role(user_id: int, new_role: str):
         raise BadRequest('Something went wrong.')
 
 
-def request(user_id):
+def request(user_id, profile_id):
     
-    data = read_query('''SELECT id FROM players_profiles WHERE user_id = ?''',(user_id,))
-
-    player_profile_id = 0
-
-    for x in data:
-        player_profile_id = x[0]
-
     update_query('''INSERT INTO requests(request, user_id, player_profile_id) VALUES(?,?,?) '''
-                 ,('player_profile link', user_id, player_profile_id))
+                 ,('player_profile link', user_id, profile_id))
 
     return Response(status_code=200, content='Request sent')
