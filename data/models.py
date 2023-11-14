@@ -20,7 +20,7 @@ class Player(BaseModel):
 
 
 class RegisterUser(BaseModel):
-    id: Optional[int]
+    id: Optional[int] = None
     email: EmailStr
     password: str
 
