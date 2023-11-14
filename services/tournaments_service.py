@@ -79,12 +79,19 @@ def generate_game_schema(players):
 
 
 def get_scheme_format(players_count):
-    if players_count == 4:
+    if players_count == 2:
+        return 'final'
+    elif players_count == 4:
         return 'semi-final'
-    elif players_count == 6:
-        return 'quarterfinals'
     elif players_count == 8:
-        return 'eight-finals'
+        return 'quarterfinals'
+    elif players_count == 16:
+        return 'eight-final'
+    elif players_count % 2 == 1:
+        raise BadRequest('Players number must be 2,4,8 or 16.')
+    elif players_count > 16:
+        raise BadRequest('Too many players, max is 16.')
+
     else:
         return 'Poveche nedavam'
 
