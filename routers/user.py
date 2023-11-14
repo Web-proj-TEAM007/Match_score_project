@@ -52,3 +52,5 @@ def change_user_role(user_id: int, new_role: str):
         raise NotFound(f'User #{user_id} not found.')
     
     return user_service.change_user_role(user_id, new_role)
+
+""" TEST TEST """
