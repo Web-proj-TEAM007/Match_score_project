@@ -17,7 +17,7 @@ def get_all(user_id: int = None,
 def director_promotion(user_id: int = None,  
                     token: str = Depends(JWTBearer())):
     
-    '''In order to promote a user you must get their id'''
+    '''In order to promote a user to director you must put their id'''
     
     user = get_user_from_token(token)
 
@@ -27,6 +27,8 @@ def director_promotion(user_id: int = None,
 def link_profile(user_id: int = None, 
                  player_id: int = None,
                  token: str = Depends(JWTBearer())):
+    
+    '''In order to link a user with a player profile you must put their id and the player profile id'''
     
     user = get_user_from_token(token)
 
