@@ -170,3 +170,15 @@ def check_match_finished(match_id: int) -> bool:
         read_query(
             '''SELECT 1 FROM matches_has_players_profiles 
 	WHERE matches_id = ? and win is not Null''', (match_id,)))
+
+def get_matches_ids(tourn_id: int, match_fase: str) -> list[int]:
+
+    match_ids = read_query('''SELECT id FROM matches 
+                      WHERE tournament_id = ? and match_fase = ?''', 
+                      (tourn_id, match_fase.lower()))
+    
+    return match_ids
+
+def matches_next_fase(match_ids: list[int]):
+
+    pass
