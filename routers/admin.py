@@ -30,7 +30,7 @@ def link_profile(user_id: int = None,
     
     user = get_user_from_token(token)
 
-    return admin_service.link(user_id,player_id,user.user_role)
+    return admin_service.link(user_id, player_id, user.user_role)
 
 
     
