@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Depends, Path, Body, Response
-from data.models import Tournament, Match, Player, UpdateParticipantModel
-from common.validators import tournament_format_validator
-from common.exceptions import NoContent, NotFound, Unauthorized
+from data.models import Tournament, Match, Player, UpdateParticipantModel, NewFase
+from common.validators import tournament_format_validator, _MATCH_FASES
+from common.exceptions import NoContent, NotFound, Unauthorized, BadRequest
 from services import tournaments_service, match_service, user_service
 from authentication.jwt_bearer import JWTBearer
 from authentication.auth import get_user_from_token
@@ -96,3 +96,20 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
     # if he does remove the match he was playing and reconfigure the schema
     # assuming we have make the needed validations
     result = tournaments_service.manage_event(tournament, change_tournament_start_date, update_participants)
+
+@tournaments_router.put("/{tourn_id}/fases")
+def move_fase(tourn_id: int, current_fase: NewFase):
+
+    trnmt_e = tournaments_service.tourn_exists_by_id(tourn_id)
+    if not trnmt_e:
+        raise NotFound(f'Tournament #{tourn_id} not found.')
+    
+    if current_fase.current_fase not in _MATCH_FASES:
+        raise BadRequest('Invalid fase.')
+    
+    match_ids = match_service.get_matches_ids(tourn_id, current_fase.current_fase)
+    winners_reversed = match_service.get_winners_ids(match_ids)
+
+    return match_service.create_next_fase(winners_reversed, 
+                                          current_fase.current_fase, 
+                                          tourn_id)
