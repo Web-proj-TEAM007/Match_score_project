@@ -1,6 +1,6 @@
 from data.database import read_query, update_query, insert_query
 from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod
-from common.validators import check_date
+from common.validators import check_date, check_score
 
 
 # from services.tournaments_service import get_tournament_title_by_id <-- You can get it from get_tournament_by_id and
@@ -60,23 +60,25 @@ from common.validators import check_date
 
 def get_match_by_id(match_id: int):
 
-    data = read_query('''SELECT m.matches_id, t.title, pl.full_name, m.score, mt.date 
+    data = read_query('''SELECT m.matches_id, t.title, pl.full_name, m.score, mt.date, mt.match_fase 
                       FROM matches_has_players_profiles m, players_profiles pl
                             JOIN matches mt ON mt.id = ?
                             JOIN tournaments t ON t.id = mt.tournament_id
                             WHERE m.matches_id = ? and m.player_profile_id = pl.id''', (match_id, match_id))
 
-    player_one = data[0][2] + ': ' + str(data[0][-2])
-    player_two = data[1][2] + ': ' + str(data[0][-2])
-    datee = data[0][-1]
+    player_one = data[0][2] + ': ' + str(check_score(data[0][-2]))
+    player_two = data[1][2] + ': ' + str(check_score(data[0][-2]))
+    datee = data[0][-2]
     tourn_title = data[0][1]
+    match_f = data[0][-1]
     datee = check_date(datee)
 
     d_match = MatchResponseMod(id=match_id, 
                                tournament_title=tourn_title, 
                                player_1=player_one, 
                                player_2=player_two, 
-                               date=datee)
+                               date=datee,
+                               match_fase=match_f)
 
     return d_match
 
@@ -87,7 +89,7 @@ def create_match_v2(tournament: Tournament, players: list[list[str]]) -> list[Ma
     # = [['Player1', 'Player4'], ['Player2', 'Player3']]
     for index in range(len(players)):  # We are taking each separate list in the list: ['Player1', 'Player4']
         match_id = insert_query('''INSERT INTO matches(format, date, tournament_id, match_fase)
-                              VALUES(?,?,?)''', (tournament.match_format, tournament.start_date, tournament.id, tournament.scheme_format))
+                              VALUES(?,?,?,?)''', (tournament.match_format, tournament.start_date, tournament.id, tournament.scheme_format))
         player1, player2 = players[index]  # eg. 'Player1', 'Player4'
         player1_id, player2_id = get_participants_ids(players[index])  # getting the ids
         insert_query('''INSERT INTO matches_has_players_profiles(matches_id, player_profile_id, score)

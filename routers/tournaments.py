@@ -70,7 +70,7 @@ def get_tournament_by_id(tournament_id: int = Query(..., description='Enter desi
     # going to be played that day
 
 
-@tournaments_router.patch("/manage-event/{tournament-id}")
+@tournaments_router.patch("/manage-event/{tournament_id}")
 def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'),
                       change_tournament_start_date: datetime = Query(None,
                                                                      description='Change tournament start date'),

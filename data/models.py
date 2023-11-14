@@ -79,6 +79,7 @@ class MatchResponseMod(BaseModel):
     player_1: str
     player_2: str
     date: datetime | str
+    match_fase: str
 
 class SetMatchScoreMod(BaseModel):
     tourn_id: int
