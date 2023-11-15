@@ -1,6 +1,6 @@
 from datetime import datetime
-
-from common.exceptions import BadRequest
+from services import user_service
+from common.exceptions import BadRequest, NotFound
 
 _TOURNAMENT_FORMATS = ('Knockout', 'League')
 _MATCH_FORMATS = ('Time limited', 'Score limited')
@@ -22,3 +22,17 @@ def check_date(date: str | datetime):
     if date != datetime:
         return 'not set yet'
     return date
+
+
+def validate_tournament_start_date(old_date, new_date):
+    if new_date <= old_date and new_date <= datetime.now():
+        raise ValueError('The tournament start date cannot be in the past')
+
+
+def validate_participants(tournament, update_participants):
+    _ = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
+         update_participants if not user_service.player_profile_exists(name)]
+    if update_participants.new_player in tournament.participants:
+        raise BadRequest(f'Player: {update_participants.new_player} is already in the tournament')
+    if update_participants.old_player not in tournament.participants:
+        raise NotFound(f'Player: {update_participants.old_player} is not part of the tournament participants')
