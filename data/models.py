@@ -146,3 +146,6 @@ class NewFase(BaseModel):
 class Link_profile(BaseModel):
     user_id: int
     player_id: int
+
+class Request_Link_profile(BaseModel):
+    player_id: int

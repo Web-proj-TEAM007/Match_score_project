@@ -23,7 +23,7 @@ def handle(user_id,user_role):
     
     update_query('''UPDATE users SET user_role = ? WHERE id = ?''',
                     ('Director', user_id,))
-    update_query('''DELETE FROM requests WHERE user_id ? ''',(user_id,))
+    update_query('''DELETE FROM requests WHERE user_id = ? ''',(user_id,))
     
     return Response(status_code=200)
    
