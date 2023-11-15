@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, Response
 from services import user_service
 from authentication.jwt_bearer import JWTBearer
-from data.models import RegisterUser, LoginData, Player
+from data.models import RegisterUser, LoginData, Player, Request_Link_profile
 from authentication.auth import get_user_from_token
 from common.exceptions import NotFound
+
 
 
 users_router = APIRouter(prefix='/users')
@@ -36,10 +37,10 @@ def promote_to_director(token: str = Depends(JWTBearer())):
 
     return user_service.promotion(user.id)
 
-@users_router.post('/requests/{profile_id}')
-def make_request(profile_id: int ,token: str = Depends(JWTBearer())):
+@users_router.post('/requests/')
+def make_request(profile: Request_Link_profile ,token: str = Depends(JWTBearer())):
     user = get_user_from_token(token)
-    return user_service.request(user.id, profile_id)
+    return user_service.request(user.id, profile.player_id)
 
 
 @users_router.put('/{user_id}')
