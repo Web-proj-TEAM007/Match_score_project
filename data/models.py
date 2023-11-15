@@ -144,3 +144,7 @@ class RequestsResponseModel(BaseModel):
 
 class NewFase(BaseModel):
     current_fase: str
+
+class Link_profile(BaseModel):
+    user_id : int
+    player_id : int
