@@ -25,7 +25,7 @@ def create_profile(data: Player, token: str = Depends(JWTBearer())):
 
     user = get_user_from_token(token)
 
-    user_service.create_player_profile(data.full_name, user.id, data.country, data.sport_club)
+    user_service.create_player_profile(data.full_name, data.country, data.sport_club)
 
     return Response("Profile created successfuly")
 
@@ -36,9 +36,10 @@ def promote_to_director(token: str = Depends(JWTBearer())):
 
     return user_service.promotion(user.id)
 
-@users_router.post('/user/request')
-def make_request(token: str = Depends(JWTBearer())):
-    pass
+@users_router.post('/requests/{profile_id}')
+def make_request(profile_id: int ,token: str = Depends(JWTBearer())):
+    user = get_user_from_token(token)
+    return user_service.request(user.id, profile_id)
 
 
 @users_router.put('/{user_id}')
