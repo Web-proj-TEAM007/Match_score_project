@@ -21,7 +21,7 @@ def create_next_fase(winner_ids: list[int],
     next_fase = _MATCH_FASES[find_next_fase(current_fase) - 1]
 
     if next_fase < 0:
-        raise BadRequest(f'Final is the last fase.')
+        raise BadRequest(f'Final is the last phase.')
 
     players_names = get_players_names(winner_ids)
 
@@ -169,7 +169,7 @@ def check_match_finished(match_id: int) -> bool:
 def get_matches_ids(tourn_id: int, match_fase: str) -> list[int]:
 
     match_ids = read_query('''SELECT id FROM matches 
-                      WHERE tournament_id = ? and match_fase = ?''', 
+                      WHERE tournament_id = ? and match_phase = ?''', 
                       (tourn_id, match_fase.lower()))
 
     return sorted(match_ids)
