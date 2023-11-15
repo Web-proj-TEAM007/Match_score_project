@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routers.user import users_router
+from routers.users import users_router
 from routers.tournaments import tournaments_router
 from routers.matches import match_router
 from routers.admin import admin_router
