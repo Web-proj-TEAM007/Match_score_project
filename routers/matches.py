@@ -39,7 +39,7 @@ def get_matches_by_tournament(tourn_id: int):
 
     return match_service.get_matches_for_tournament(tourn_id)
 
-
+@match_router.put('/{match_id}')
 def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = Depends(JWTBearer())):
 
     ans = match_service.check_match_finished(match_id)
@@ -52,10 +52,6 @@ def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = D
         raise BadRequest(f'Player #{match_score.pl_1_id} not found in match #{match_id}')
     if not match_service.check_player_in_match(match_score.pl_2_id, match_id):
         raise BadRequest(f'Player #{match_score.pl_2_id} not found in match #{match_id}')
-
-
-@match_router.put('/{match_id}')
-def set_match_score(match_id: int, match_score: SetMatchScoreMod):
 
     match_service.change_match_score(match_id, match_score)
     return Response(status_code=200, content='Score changed successfully')
