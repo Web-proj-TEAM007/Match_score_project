@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Depends, Path, Body, Response
 from data.models import Tournament, Match, Player, UpdateParticipantModel
-from common.validators import tournament_format_validator
-from common.exceptions import NoContent, NotFound, Unauthorized
+from common.validators import tournament_format_validator, validate_tournament_start_date, validate_participants
+from common.exceptions import NoContent, NotFound, Unauthorized, BadRequest
 from services import tournaments_service, match_service, user_service
 from authentication.jwt_bearer import JWTBearer
 from authentication.auth import get_user_from_token
@@ -83,16 +83,11 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
         raise Unauthorized(content='Only directors can manage a tournament')
     tournament = tournaments_service.get_tournament_by_id(tour_id)
     if not tournament:
-        raise NotFound(f'Tournament with id: {tour_id}, does not exists.')
-    if not change_tournament_start_date or update_participants:
-        manage_tournament()
-    # -- check if the date that want to be changed is not in the past
-    if change_tournament_start_date < tournament.start_date and change_tournament_start_date < datetime.now():
-        raise ValueError('The tournament start date cannot be in the past')
+        raise NotFound(f'Tournament with id: {tour_id}, does not exist.')
+    if change_tournament_start_date:
+        validate_tournament_start_date(tournament.start_date, change_tournament_start_date)
     if update_participants:
-        old, new = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
-                    update_participants if not user_service.player_profile_exists(name)]
-    # Have to make further check if the new_player not already in the same tournament, if he is playing in other match(
-    # if he does remove the match he was playing and reconfigure the schema
-    # assuming we have make the needed validations
-    result = tournaments_service.manage_event(tournament, change_tournament_start_date, update_participants)
+        validate_participants(tournament, update_participants)
+    result = tournaments_service.manage_tournament(tournament, change_tournament_start_date, update_participants)
+    return result
+
