@@ -4,7 +4,7 @@ from common.exceptions import BadRequest, NotFound
 
 _TOURNAMENT_FORMATS = ('Knockout', 'League')
 _MATCH_FORMATS = ('Time limited', 'Score limited')
-
+_MATCH_FASES = ('final', 'semi-final', 'quarterfinals', 'eight-final')
 
 def tournament_format_validator(tour_format: str):
     if tour_format not in _TOURNAMENT_FORMATS:
@@ -36,3 +36,10 @@ def validate_participants(tournament, update_participants):
         raise BadRequest(f'Player: {update_participants.new_player} is already in the tournament')
     if update_participants.old_player not in tournament.participants:
         raise NotFound(f'Player: {update_participants.old_player} is not part of the tournament participants')
+    
+def check_score(score: int | None):
+
+    if score is None:
+        return 0
+    else:
+        return score
