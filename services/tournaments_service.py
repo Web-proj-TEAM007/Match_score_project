@@ -4,6 +4,7 @@ import random
 from common.validators import tournament_format_validator
 from common.exceptions import BadRequest
 from fastapi import Response
+from services import user_service, match_service
 
 
 def get_all_tournaments(title, tour_format):
@@ -46,19 +47,25 @@ def get_tournament_participants(tour_id: int):
     return participants
 
 
-def manage_event(tournament, new_date, change_participants):
+def manage_tournament(tournament, new_date, change_participants):
+    response = []
     if new_date:
-        # maybe start_date of the tournament need to be added to the db
-        #   update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", new_date, tournament.id)
-        # IMPORTANT: after we change the tournament date make sure to move match date if needed
-        tournament.start_date = new_date
+        old_date = tournament.start_date
+        update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", new_date, tournament.id)
+        response.append(Response(status_code=200, content=f'Successfully changed tournament start date from '
+                                                          f'{old_date} to {new_date}'))
     if change_participants:
-        old, new = change_participants
-        date = update_query(
-            "UPDATE tournaments_has_player_profiles SET player_profile_id = ? WHERE tournament_id = ? "
-            "AND player_profile_id = ?",
-            new.id, tournament.id, old.id
-        )
+        new_player = user_service.get_player_profile_by_fullname(change_participants.new_player)
+        old_player = user_service.get_player_profile_by_fullname(change_participants.old_player)
+        tournament.participants.remove(old_player)
+        tournament.participants.append(new_player)
+        if match_service.update_participants_for_matches(tournament, old_player, new_player):
+            response.append(Response(status_code=200, content=f'Successfully changed tournament participant: '
+                                                              f'{old_player} with {new_player} and updated upcoming '
+                                                              f'matches with the new player'))
+        response.append(Response(status_code=200, content=f'Successfully changed tournament participant: {old_player} '
+                                                          f'with {new_player}, no matches are updated'))
+    return response
 
 
 def generate_game_schema(players):
@@ -75,15 +82,17 @@ def generate_game_schema(players):
     match_players.append([first_match_player1, first_match_player2])
     match_players.extend(generate_game_schema(players))
     return match_players
+
+
 # output : [['Player1', 'Player4'], ['Player2', 'Player3']]
 
 
 def get_scheme_format(players_count):
     if players_count == 4:
         return 'semi-final'
-    elif players_count == 6:
-        return 'quarterfinals'
     elif players_count == 8:
+        return 'quarterfinals'
+    elif players_count == 16:
         return 'eight-finals'
     else:
         return 'Poveche nedavam'
