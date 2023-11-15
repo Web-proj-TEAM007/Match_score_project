@@ -2,7 +2,7 @@ from data.database import read_query, update_query, insert_query
 from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod
 from common.validators import check_date
 from services import user_service
-from common.validators import check_date, check_score, _MATCH_FASES
+from common.validators import check_date, check_score, _MATCH_PHASES
 from datetime import datetime
 from common.exceptions import BadRequest
 
@@ -18,7 +18,7 @@ def create_next_fase(winner_ids: list[int],
                      date: datetime | None = None) -> list[MatchTournResponseMod]:
 
     matches = []
-    next_fase = _MATCH_FASES[find_next_fase(current_fase) - 1]
+    next_fase = _MATCH_PHASES[find_next_fase(current_fase) - 1]
 
     if next_fase < 0:
         raise BadRequest(f'Final is the last phase.')
@@ -187,7 +187,7 @@ def get_winners_ids(match_ids: list[int]) -> list[str]:
 
 def find_next_fase(current_fase: str) -> int:
 
-    for index, fase in enumerate(_MATCH_FASES):
+    for index, fase in enumerate(_MATCH_PHASES):
         if current_fase == fase:
             return index
 
