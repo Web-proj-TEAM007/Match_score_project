@@ -107,15 +107,15 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
     result = tournaments_service.manage_tournament(tournament, change_tournament_start_date, update_participants)
     return result
 
-@tournaments_router.put("/{tourn_id}/fases")
-def move_fase(tourn_id: int, current_fase: NewFase):
+@tournaments_router.put("/{tourn_id}/phases")
+def move_phase(tourn_id: int, current_fase: NewFase):
 
     trnmt_e = tournaments_service.tourn_exists_by_id(tourn_id)
     if not trnmt_e:
         raise NotFound(f'Tournament #{tourn_id} not found.')
 
     if current_fase.current_phase not in _MATCH_FASES:
-        raise BadRequest('Invalid fase.')
+        raise BadRequest('Invalid phase.')
 
     match_ids = match_service.get_matches_ids(tourn_id, current_fase.current_phase)
     winners_reversed = match_service.get_winners_ids(match_ids)
