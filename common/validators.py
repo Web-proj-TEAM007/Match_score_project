@@ -4,7 +4,7 @@ from common.exceptions import BadRequest, NotFound
 
 _TOURNAMENT_FORMATS = ('Knockout', 'League')
 _MATCH_FORMATS = ('Time limited', 'Score limited')
-_MATCH_FASES = ('final', 'semi-final', 'quarterfinals', 'eight-final')
+MATCH_PHASES = ('final', 'semi-final', 'quarterfinals', 'eight-final')
 
 def tournament_format_validator(tour_format: str):
     if tour_format not in _TOURNAMENT_FORMATS:
