@@ -81,6 +81,7 @@ class MatchResponseMod(BaseModel):
     player_1: str
     player_2: str
     date: datetime | str
+    match_fase: str
 
 class SetMatchScoreMod(BaseModel):
     tourn_id: int
@@ -136,6 +137,7 @@ class RequestsResponseModel(BaseModel):
     def from_query_result(cls, id, request, user_id):
         return cls(id=id,
                    request=request,
-                   user_id=user_id,
+                   user_id=user_id)
 
-                   )
+class NewFase(BaseModel):
+    current_phase: str
