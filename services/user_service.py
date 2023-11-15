@@ -42,15 +42,11 @@ def log_in(email: str, password: str):
         return BadRequest(f'Invalid login.')
 
 
-def create_player_profile(full_name: str, user_id: int, country: Optional[str] = None,
-                          sport_club: Optional[str] = None):
-    generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club, user_id) VALUES(?,?,?)''',
-                                (full_name, country, sport_club, user_id))
+def create_player_profile(full_name: str, country: Optional[str] = None,  sport_club: Optional[str] = None):
+    generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club) VALUES(?,?,?)''',
+                                (full_name, country, sport_club))
     player = Player(full_name=full_name, country=country, sport_club=sport_club)
     player.id = generated_id
-
-    insert_query('''INSERT INTO requests(request, user_id, player_profile_id) VALUES(?,?,?) ''',
-                 ("player profile", user_id, generated_id))
 
     return player
 
@@ -101,8 +97,12 @@ def change_user_role(user_id: int, new_role: str):
         raise BadRequest('Something went wrong.')
 
 
-def request():
-    pass
+def request(user_id, profile_id):
+
+    update_query('''INSERT INTO requests(request, user_id, player_profile_id) VALUES(?,?,?) '''
+                 ,('player_profile link', user_id, profile_id))
+    
+    return Response(status_code=200, content='Request sent')
 
 
 def get_player_profile_by_fullname(fullname: str):
