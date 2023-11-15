@@ -16,9 +16,7 @@ def create_user(email: str, password: str):
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     insert_query("INSERT INTO users(email, password, user_role) VALUES(?,?,?)",
                  (email, hashed_password, 'user'))
-    
 
-    
     return sign_jwt(email)
 
 
@@ -44,28 +42,25 @@ def log_in(email: str, password: str):
         return BadRequest(f'Invalid login.')
 
 
-def create_player_profile(full_name: str, user_id: int, country: Optional[str] = None,  sport_club: Optional[str] = None):
+def create_player_profile(full_name: str, user_id: int, country: Optional[str] = None,
+                          sport_club: Optional[str] = None):
     generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club, user_id) VALUES(?,?,?)''',
                                 (full_name, country, sport_club, user_id))
     player = Player(full_name=full_name, country=country, sport_club=sport_club)
     player.id = generated_id
 
     insert_query('''INSERT INTO requests(request, user_id, player_profile_id) VALUES(?,?,?) ''',
-                        ("player profile", user_id, generated_id))
+                 ("player profile", user_id, generated_id))
 
     return player
 
 
-
 def email_exists(email: str | None = None) -> User:
-    
-        
     data = read_query('''SELECT id, email, password, user_role FROM users 
                             WHERE email = ?''',
                       (email,))
-    
+
     return next((User.from_query_result(*row) for row in data), None)
-    
 
 
 def player_profile_exists(full_name) -> bool:
@@ -84,21 +79,20 @@ def get_player_profile_by_id(profile_id: int):
 
 
 def promotion(user_id):
-
     insert_query('''INSERT INTO requests(request, user_id) VALUES(?,?) ''',
-                        ("Director",user_id,))
-    
+                 ("Director", user_id,))
+
     return Response(status_code=200, content='Request sent')
 
-def user_exists(user_id: int) -> bool:
 
+def user_exists(user_id: int) -> bool:
     return any(
         read_query(
             '''SELECT 1 FROM users
             WHERE id = ?''', (user_id,)))
 
-def change_user_role(user_id: int, new_role: str):
 
+def change_user_role(user_id: int, new_role: str):
     ans = update_query('''UPDATE users SET user_role = ?
                        WHERE id = ?''', (new_role, user_id))
     if ans:
@@ -109,3 +103,18 @@ def change_user_role(user_id: int, new_role: str):
 
 def request():
     pass
+
+
+def get_player_profile_by_fullname(fullname: str):
+    data = read_query("SELECT id, full_name, country, club FROM players_profiles WHERE full_name = ?"
+                      , (fullname,))
+    player = next((Player.from_query_result(*row) for row in data), None)
+    return player
+
+
+def check_if_player_have_assigned_matches(tournament, player) -> list[int]:
+    data = read_query('''SELECT matches_id FROM matches_has_players_profiles
+                    WHERE matches_has_players_profiles.matches_id IN (SELECT matches.id
+                     FROM matches WHERE matches.tournament_id = ?) AND 
+                     matches_has_players_profiles.player_profile_id = ?''', (tournament.id, player.id))
+    return data
