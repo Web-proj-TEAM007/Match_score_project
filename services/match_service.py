@@ -1,6 +1,7 @@
 from data.database import read_query, update_query, insert_query
 from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod
 from common.validators import check_date
+from services import user_service
 
 
 # from services.tournaments_service import get_tournament_title_by_id <-- You can get it from get_tournament_by_id and
@@ -59,7 +60,6 @@ from common.validators import check_date
 # matches_has_players_profiles
 
 def get_match_by_id(match_id: int):
-
     data = read_query('''SELECT m.matches_id, t.title, pl.full_name, m.score, mt.date 
                       FROM matches_has_players_profiles m, players_profiles pl
                             JOIN matches mt ON mt.id = ?
@@ -72,10 +72,10 @@ def get_match_by_id(match_id: int):
     tourn_title = data[0][1]
     datee = check_date(datee)
 
-    d_match = MatchResponseMod(id=match_id, 
-                               tournament_title=tourn_title, 
-                               player_1=player_one, 
-                               player_2=player_two, 
+    d_match = MatchResponseMod(id=match_id,
+                               tournament_title=tourn_title,
+                               player_1=player_one,
+                               player_2=player_two,
                                date=datee)
 
     return d_match
@@ -86,8 +86,9 @@ def create_match_v2(tournament: Tournament, players: list[list[str]]) -> list[Ma
     # Randomly assigned players that come like argument from create_tournament
     # = [['Player1', 'Player4'], ['Player2', 'Player3']]
     for index in range(len(players)):  # We are taking each separate list in the list: ['Player1', 'Player4']
-        match_id = insert_query('''INSERT INTO matches(format, date, tournament_id, match_fase)
-                              VALUES(?,?,?)''', (tournament.match_format, tournament.start_date, tournament.id, tournament.scheme_format))
+        match_id = insert_query('''INSERT INTO matches(format, date, tournament_id, match_phase)
+                              VALUES(?,?,?)''', (
+            tournament.match_format, tournament.start_date, tournament.id, tournament.scheme_format))
         player1, player2 = players[index]  # eg. 'Player1', 'Player4'
         player1_id, player2_id = get_participants_ids(players[index])  # getting the ids
         insert_query('''INSERT INTO matches_has_players_profiles(matches_id, player_profile_id, score)
@@ -112,46 +113,45 @@ def get_participants_ids(participants: list[str]) -> list[int]:
 
 
 def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None:
-    
     pl_1_id = match_score.pl_1_id
     pl_2_id = match_score.pl_2_id
     pl_1_score = match_score.pl_1_score
     pl_2_score = match_score.pl_2_score
-
+    # match = get_match_by_id(match_score.match_id)
     match_status = match_score.match_finished
-
 
     if not match_status:
 
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?
-                        WHERE matches_id = ? and player_profile_id = ?''',(pl_1_score, match_id, pl_1_id))
+                        WHERE matches_id = ? and player_profile_id = ?''', (pl_1_score, match_id, pl_1_id))
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?
-                        WHERE matches_id = ? and player_profile_id = ?''',(pl_2_score, match_id, pl_2_id))
+                        WHERE matches_id = ? and player_profile_id = ?''', (pl_2_score, match_id, pl_2_id))
     elif pl_1_score > pl_2_score:
 
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?, win = 1
-                        WHERE matches_id = ? and player_profile_id = ?''',(pl_1_score, match_id, pl_1_id))
+                        WHERE matches_id = ? and player_profile_id = ?''', (pl_1_score, match_id, pl_1_id))
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?, win = 0
-                        WHERE matches_id = ? and player_profile_id = ?''',(pl_2_score, match_id, pl_2_id))
+                        WHERE matches_id = ? and player_profile_id = ?''', (pl_2_score, match_id, pl_2_id))
     elif pl_1_score < pl_2_score:
 
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?, win = 0
-                        WHERE matches_id = ? and player_profile_id = ?''',(pl_1_score, match_id, pl_1_id))
+                        WHERE matches_id = ? and player_profile_id = ?''', (pl_1_score, match_id, pl_1_id))
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?, win = 1
-                        WHERE matches_id = ? and player_profile_id = ?''',(pl_2_score, match_id, pl_2_id))
+                        WHERE matches_id = ? and player_profile_id = ?''', (pl_2_score, match_id, pl_2_id))
     else:
         raise ValueError('Мача e X, кво праим?')
 
 
 def get_matches_for_tournament(tournament_id: int):
     # ---- To Shahin: Will need this function to properly return tournaments
-    data = read_query('''SELECT id, format, date, tournament_id FROM matches WHERE tournament_id = ?''', (tournament_id,))
+    data = read_query('''SELECT id, format, date, tournament_id, match_phase FROM matches 
+    WHERE tournament_id = ?''', (tournament_id,))
 
     return (Match.from_query_result(*row) for row in data)
 
@@ -162,9 +162,22 @@ def match_exists(match_id: int) -> bool:
             '''SELECT 1 FROM matches WHERE id = ?''',
             (match_id,)))
 
-def check_match_finished(match_id: int) -> bool:
 
+def check_match_finished(match_id: int) -> bool:
     return any(
         read_query(
             '''SELECT 1 FROM matches_has_players_profiles 
-	WHERE matches_id = ? and win is not Null''', (match_id,)))
+            WHERE matches_id = ? and win is not Null''', (match_id,)))
+
+
+def update_participants_for_matches(tournament, old_player, new_player):
+    matches_ids = user_service.check_if_player_have_assigned_matches(tournament, old_player)
+    if matches_ids:
+        matches = [get_match_by_id(match_id) for match_id in matches_ids]
+        for match in matches:
+            update_query(
+                "UPDATE matches_has_players_profiles SET player_profile_id = ? WHERE matches_id = ? AND "
+                "player_profile_id = ?",
+                new_player.id, match.id, old_player.id)
+        return True
+    return False
