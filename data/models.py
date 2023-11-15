@@ -57,16 +57,16 @@ class Match(BaseModel):
     format: str
     date: datetime | str = 'not set yet'
     tourn_id: int
-    match_fase: str
+    match_phase: str
 
     @classmethod
-    def from_query_result(cls, id, format, date, tourn_id, match_fase):
+    def from_query_result(cls, id, format, date, tourn_id, match_phase):
         return cls(
             id=id,
             format=format,
             date=check_date(date),
             tourn_id=tourn_id,
-            match_fase=match_fase)
+            match_phase=match_phase)
 
 
 class MatchTournResponseMod(BaseModel):
@@ -81,7 +81,6 @@ class MatchResponseMod(BaseModel):
     player_1: str
     player_2: str
     date: datetime | str
-    match_fase: str
 
 class SetMatchScoreMod(BaseModel):
     tourn_id: int
@@ -132,15 +131,11 @@ class RequestsResponseModel(BaseModel):
     id: int
     request: str
     user_id: int
-    
 
     @classmethod
     def from_query_result(cls, id, request, user_id):
         return cls(id=id,
                    request=request,
                    user_id=user_id,
-                   
-                   )
 
-class NewFase(BaseModel):
-    current_fase: str
+                   )

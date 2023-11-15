@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query, Depends, Path, Body, Response
-from data.models import Tournament, Match, Player, UpdateParticipantModel, NewFase
-from common.validators import tournament_format_validator, _MATCH_FASES
+from data.models import Tournament, Match, Player, UpdateParticipantModel
+from common.validators import tournament_format_validator, validate_tournament_start_date, validate_participants
 from common.exceptions import NoContent, NotFound, Unauthorized, BadRequest
 from services import tournaments_service, match_service, user_service
 from authentication.jwt_bearer import JWTBearer
@@ -70,7 +70,7 @@ def get_tournament_by_id(tournament_id: int = Query(..., description='Enter desi
     # going to be played that day
 
 
-@tournaments_router.patch("/manage-event/{tournament_id}")
+@tournaments_router.patch("/manage-event/{tournament-id}")
 def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'),
                       change_tournament_start_date: datetime = Query(None,
                                                                      description='Change tournament start date'),
@@ -83,33 +83,11 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
         raise Unauthorized(content='Only directors can manage a tournament')
     tournament = tournaments_service.get_tournament_by_id(tour_id)
     if not tournament:
-        raise NotFound(f'Tournament with id: {tour_id}, does not exists.')
-    if not change_tournament_start_date or update_participants:
-        manage_tournament()
-    # -- check if the date that want to be changed is not in the past
-    if change_tournament_start_date < tournament.start_date and change_tournament_start_date < datetime.now():
-        raise ValueError('The tournament start date cannot be in the past')
+        raise NotFound(f'Tournament with id: {tour_id}, does not exist.')
+    if change_tournament_start_date:
+        validate_tournament_start_date(tournament.start_date, change_tournament_start_date)
     if update_participants:
-        old, new = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
-                    update_participants if not user_service.player_profile_exists(name)]
-    # Have to make further check if the new_player not already in the same tournament, if he is playing in other match(
-    # if he does remove the match he was playing and reconfigure the schema
-    # assuming we have make the needed validations
-    result = tournaments_service.manage_event(tournament, change_tournament_start_date, update_participants)
+        validate_participants(tournament, update_participants)
+    result = tournaments_service.manage_tournament(tournament, change_tournament_start_date, update_participants)
+    return result
 
-@tournaments_router.put("/{tourn_id}/fases")
-def move_fase(tourn_id: int, current_fase: NewFase):
-
-    trnmt_e = tournaments_service.tourn_exists_by_id(tourn_id)
-    if not trnmt_e:
-        raise NotFound(f'Tournament #{tourn_id} not found.')
-    
-    if current_fase.current_fase not in _MATCH_FASES:
-        raise BadRequest('Invalid fase.')
-    
-    match_ids = match_service.get_matches_ids(tourn_id, current_fase.current_fase)
-    winners_reversed = match_service.get_winners_ids(match_ids)
-
-    return match_service.create_next_fase(winners_reversed, 
-                                          current_fase.current_fase, 
-                                          tourn_id)

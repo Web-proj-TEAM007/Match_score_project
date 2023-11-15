@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Query, Depends, Path, Response
 from datetime import datetime
 from services import tournaments_service, match_service
-from common.exceptions import NoContent, NotFound, BadRequest, Unauthorized
+from common.exceptions import NoContent, NotFound, BadRequest
 from authentication.jwt_bearer import JWTBearer
-from authentication.auth import get_user_from_token
+# from authentication.auth import get_user_from_token
 from data.models import Match, Tournament, SetMatchScoreMod
 
 match_router = APIRouter(prefix='/matches')
@@ -29,28 +29,8 @@ def get_match_by_id(match_id: int):
 
     return match_service.get_match_by_id(match_id)
 
-@match_router.get('/tournaments/{tourn_id}')
-def get_matches_by_tournament(tourn_id: int):
-
-    ans = tournaments_service.tourn_exists_by_id(tourn_id)
-    if not ans:
-        return NotFound(f'Tournament #{tourn_id} not found.')
-    
-    return match_service.get_matches_for_tournament(tourn_id)
-
 @match_router.put('/{match_id}')
-def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = Depends(JWTBearer())):
-
-    ans = match_service.check_match_finished(match_id)
-    user = get_user_from_token(token)
-
-    if ans and user.user_role.capitalize() != 'Director':
-        raise Unauthorized('The match already finished and only Director can change the score.')
-
-    if not match_service.check_player_in_match(match_score.pl_1_id, match_id):
-        raise BadRequest(f'Player #{match_score.pl_1_id} not found in match #{match_id}')
-    if not match_service.check_player_in_match(match_score.pl_2_id, match_id):
-        raise BadRequest(f'Player #{match_score.pl_2_id} not found in match #{match_id}')
+def set_match_score(match_id: int, match_score: SetMatchScoreMod):
 
     match_service.change_match_score(match_id, match_score)
     return Response(status_code=200, content='Score changed successfully')

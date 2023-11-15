@@ -27,19 +27,6 @@ def handle(user_id,user_role):
     
     return Response(status_code=200)
    
-def link(user_id,player_id,user_role):
-    
-    if user_role != 'admin':
-        return BadRequest('Access not allowed!')
-    
-    update_query('''UPDATE users SET player_profile_id = ? WHERE id = ?''',
-                    (player_id, user_id,))
-    update_query('''DELETE FROM requests WHERE user_id = ? ''',(user_id,))
-
-    return Response(status_code=201, content="Request accepted")
-    
-    
-    
     
     
 
