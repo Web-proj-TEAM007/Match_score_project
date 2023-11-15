@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Depends, Path, Body, Response
 from data.models import Tournament, Match, Player, UpdateParticipantModel, NewFase
 from common.validators import (tournament_format_validator, validate_tournament_start_date, validate_participants,
-                               MATCH_PHASES)
+                               _MATCH_PHASES)
 from common.exceptions import NoContent, NotFound, Unauthorized, BadRequest
 from services import tournaments_service, match_service, user_service
 from authentication.jwt_bearer import JWTBearer
@@ -71,7 +71,7 @@ def get_tournament_by_id(tournament_id: int = Query(..., description='Enter desi
     # going to be played that day
 
 
-@tournaments_router.patch("/manage-event/{tournament-id}")
+@tournaments_router.patch("/manage-event/{tour_id}")
 def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'),
                       change_tournament_start_date: datetime = Query(None,
                                                                      description='Change tournament start date'),
@@ -99,7 +99,7 @@ def move_phase(tournament_id: int, current_phase: NewFase):
     if not tournament_exists:
         raise NotFound(f'Tournament #{tournament_id} not found.')
 
-    if current_phase.current_phase not in MATCH_PHASES:
+    if current_phase.current_phase not in _MATCH_PHASES:
         raise BadRequest('Invalid phase.')
 
     match_ids = match_service.get_matches_ids(tournament_id, current_phase.current_phase)
