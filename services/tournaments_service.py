@@ -1,10 +1,11 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player
+from data.models import Tournament, Player, TournamentCreateModel
 import random
 from common.validators import tournament_format_validator
 from common.exceptions import BadRequest
 from fastapi import Response
 from services import user_service, match_service
+import itertools
 
 
 def get_all_tournaments(title, tour_format):
@@ -32,11 +33,18 @@ def get_tournament_by_id(tour_id: int):
     return tournament
 
 
-def create_tournament(tournament: Tournament):
+def create_tournament(tournament: TournamentCreateModel) -> Tournament:
     generated_id = insert_query("INSERT INTO tournaments (format, title, prize) VALUES (?, ?, ?)",
                                 (tournament.tour_format, tournament.title, tournament.prize))
-    tournament.id = generated_id
-    return tournament
+    return Tournament(
+        id=generated_id,
+        title=tournament.title,
+        tour_format=tournament.tour_format,
+        prize=tournament.prize,
+        match_format=tournament.match_format,
+        participants=tournament.participants,
+        start_date=tournament.start_date
+    )
 
 
 # ------ this will be moved to a player_service most likely but for now is here to test tournaments get by id -----
@@ -68,7 +76,7 @@ def manage_tournament(tournament, new_date, change_participants):
     return response
 
 
-def generate_game_schema(players):
+def generate_knockout_schema(players):
     match_players = []
     players_count = len(players)
     if not players_count:
@@ -80,11 +88,15 @@ def generate_game_schema(players):
     first_match_player2 = random.choice(players)
     players.remove(first_match_player2)
     match_players.append([first_match_player1, first_match_player2])
-    match_players.extend(generate_game_schema(players))
+    match_players.extend(generate_knockout_schema(players))
     return match_players
-
-
 # output : [['Player1', 'Player4'], ['Player2', 'Player3']]
+
+
+def generate_league_schema(players):
+    player_pairs = list(itertools.combinations(players, 2))
+    match_schema = [[pair[0], pair[1]] for pair in player_pairs]
+    return match_schema
 
 
 def get_scheme_format(players_count):
