@@ -91,6 +91,8 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
     return result
 
 
+
+
 @tournaments_router.put("/{tournament_id}/phases")
 def move_phase(tournament_id: int, current_phase: NewPhase):
     tournament_exists = tournaments_service.tourn_exists_by_id(tournament_id)
