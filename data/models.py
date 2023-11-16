@@ -161,3 +161,9 @@ class WinnerResponseMode(BaseModel):
     club: str | None
     country: str | None
     tournament_won: str
+
+class MatchesResponseMod(BaseModel):
+    match_id: int
+    score: str
+    match_date: datetime | None
+    tournament_title: str
