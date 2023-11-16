@@ -1,10 +1,11 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod
+from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod, WinnerResponseMode
 from common.validators import check_date
-from services import user_service
+from services import user_service, tournaments_service
 from common.validators import check_date, check_score, _MATCH_PHASES
 from datetime import datetime
 from common.exceptions import BadRequest
+from fastapi import Response
 
 
 # from services.tournaments_service import get_tournament_title_by_id <-- You can get it from get_tournament_by_id and
@@ -126,6 +127,7 @@ def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None:
     pl_1_score = match_score.pl_1_score
     pl_2_score = match_score.pl_2_score
 
+    is_final = check_if_match_final(match_id)
     match_status = match_score.match_finished
 
     if not match_status:
@@ -144,6 +146,15 @@ def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None:
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?, win = 0
                         WHERE matches_id = ? and player_profile_id = ?''', (pl_2_score, match_id, pl_2_id))
+        
+        if is_final:
+            namee, countryy, clubb = list(get_player_name_club_country(pl_1_id)[0])
+            tourn_name = get_tournament_title(match_score.tourn_id)[0][0]
+            return WinnerResponseMode(name=namee,
+                                      club=clubb,
+                                      country=countryy,
+                                      tournament_won=tourn_name)
+
     elif pl_1_score < pl_2_score:
 
         update_query('''UPDATE matches_has_players_profiles
@@ -152,8 +163,18 @@ def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None:
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?, win = 1
                         WHERE matches_id = ? and player_profile_id = ?''', (pl_2_score, match_id, pl_2_id))
+        
+        if is_final:
+            namee, countryy, clubb = list(get_player_name_club_country(pl_2_id)[0])
+            tourn_name = get_tournament_title(match_score.tourn_id)[0][0]
+            return WinnerResponseMode(name=namee,
+                                      club=clubb,
+                                      country=countryy,
+                                      tournament_won=tourn_name.title)
     else:
         raise ValueError('Мача e X, кво праим?')
+    
+    return Response(status_code=200, content='Score changed successfully')
 
 
 def get_matches_for_tournament(tournament_id: int):
@@ -235,3 +256,22 @@ def update_participants_for_matches(tournament, old_player, new_player):
                 new_player.id, match.id, old_player.id)
         return True
     return False
+
+def check_if_match_final(match_id: int) -> bool:
+
+    return any(
+        read_query(
+            '''SELECT 1 FROM matches
+            WHERE id = ? and match_phase = ?''', (match_id, 'final')))
+
+def get_player_name_club_country(player_id: int):
+
+    return read_query(
+        '''SELECT full_name, country, club FROM players_profiles
+        WHERE id = ?''', (player_id,))
+
+def get_tournament_title(tourn_id: int):
+
+    return read_query(
+        '''SELECT title FROM tournaments
+        WHERE id = ?''', (tourn_id,))
