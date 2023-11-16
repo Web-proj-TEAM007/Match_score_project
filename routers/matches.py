@@ -14,11 +14,11 @@ def get_all_matches(sort_by_date: datetime = Query(None, description='Filter by 
                                                                      'YYYY-MM-DDTHH:MM:SS eg. 2023-10-21T00:00:00 :'),
                     sort_by_tournament_id: int = Query(default=None, description='Search by topic id')):
     """You can get all existing matches, optional filter features"""
-    # matches = match_service.get_all_matches(sort_by_date, sort_by_tournament_id)
-    # if not matches:
-    #     raise NotFound(content='No matches')
-    # return matches
-
+    matches = match_service.get_all_matches()
+    if not matches:
+        raise NotFound(content='No matches')
+    
+    return matches
 
 @match_router.get('/{match_id}')
 def get_match_by_id(match_id: int):
