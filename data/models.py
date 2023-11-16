@@ -155,3 +155,8 @@ class Link_profile(BaseModel):
 
 class Request_Link_profile(BaseModel):
     player_id: int
+
+class WinnerRespinseMode(BaseModel):
+    name: str
+    club: str
+    tournament_won: str
