@@ -191,6 +191,9 @@ def get_winners_ids(match_ids: list[int]) -> list[str]:
         winner_id = read_query('''SELECT mpp.player_profile_id 
                                 FROM matches_has_players_profiles mpp
                                 WHERE mpp.matches_id = ? and mpp.win = 1''', (id[0],))
+        if not winner_id:
+            raise BadRequest(f'Matches did not finished yet.')
+        
         winners.append(winner_id[0][0])
 
     return winners[::-1]
