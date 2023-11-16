@@ -11,16 +11,15 @@ from common.exceptions import BadRequest
 # then tournament.title
 
 
-def create_next_fase(winner_ids: list[int], 
-                     current_fase: str, 
-                     tourn_id: int,
-                     match_format: str | None = 'Time limited', 
-                     date: datetime | None = None) -> list[MatchTournResponseMod]:
-
+def create_next_phase(winner_ids: list[int],
+                      current_phase: str,
+                      tourn_id: int,
+                      match_format: str | None = 'Time limited',
+                      date: datetime | None = None) -> list[MatchTournResponseMod]:
     matches = []
-    next_fase = _MATCH_PHASES[find_next_fase(current_fase) - 1]
+    next_phase = _MATCH_PHASES[find_next_fase(current_phase) - 1]
 
-    if next_fase < 0:
+    if next_phase < 0:
         raise BadRequest(f'Final is the last phase.')
 
     players_names = get_players_names(winner_ids)
@@ -28,7 +27,7 @@ def create_next_fase(winner_ids: list[int],
     n = len(winner_ids) // 2
     for _ in range(int(n)):
         match_id = insert_query('''INSERT INTO matches(format, date, tournament_id, match_phase)
-                              VALUES(?,?,?,?)''',(match_format, date, tourn_id, next_fase))
+                              VALUES(?,?,?,?)''', (match_format, date, tourn_id, next_phase))
 
         player_1 = winner_ids[-1]
         player_2 = winner_ids[-2]
@@ -52,6 +51,7 @@ def create_next_fase(winner_ids: list[int],
 
     return matches
 
+
 # matches_has_players_profiles
 
 def get_match_by_id(match_id: int):
@@ -68,24 +68,31 @@ def get_match_by_id(match_id: int):
     match_f = data[0][-1]
     datee = check_date(datee)
 
-    d_match = MatchResponseMod(id=match_id, 
-                               tournament_title=tourn_title, 
-                               player_1=player_one, 
-                               player_2=player_two, 
+    d_match = MatchResponseMod(id=match_id,
+                               tournament_title=tourn_title,
+                               player_1=player_one,
+                               player_2=player_two,
                                date=datee,
                                match_fase=match_f)
 
     return d_match
 
 
-def create_match_v2(tournament: Tournament, players: list[list[str]]) -> list[MatchTournResponseMod]:
+def create_match_v2(tournament: Tournament, players: list[list[str]] | tuple) -> list[MatchTournResponseMod]:
     matches = []
     # Randomly assigned players that come like argument from create_tournament
     # = [['Player1', 'Player4'], ['Player2', 'Player3']]
-    for index in range(len(players)):  # We are taking each separate list in the list: ['Player1', 'Player4']
-        match_id = insert_query('''INSERT INTO matches(format, date, tournament_id, match_phase)
-                              VALUES(?,?,?,?)''', 
-                              (tournament.match_format, tournament.start_date, tournament.id, tournament.scheme_format))
+    for index in range(len(players)):
+        if tournament.scheme_format:  # We are taking each list in the list: [['Player1', 'Player4']]
+            match_id = insert_query('''INSERT INTO matches(format, date, tournament_id, match_phase)
+                              VALUES(?,?,?,?)''',
+                                    (tournament.match_format, tournament.start_date, tournament.id,
+                                     tournament.scheme_format))
+        elif not tournament.scheme_format:
+            match_id = insert_query('''INSERT INTO matches(format, date, tournament_id, match_phase)
+                                          VALUES(?,?,?,?)''',
+                                    (tournament.match_format, tournament.start_date, tournament.id,
+                                     'League'))
         player1, player2 = players[index]  # eg. 'Player1', 'Player4'
         player1_id, player2_id = get_participants_ids(players[index])  # getting the ids
         insert_query('''INSERT INTO matches_has_players_profiles(matches_id, player_profile_id, score)
@@ -110,7 +117,6 @@ def get_participants_ids(participants: list[str]) -> list[int]:
 
 
 def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None:
-
     pl_1_id = match_score.pl_1_id
     pl_2_id = match_score.pl_2_id
     pl_1_score = match_score.pl_1_score
@@ -166,16 +172,16 @@ def check_match_finished(match_id: int) -> bool:
             '''SELECT 1 FROM matches_has_players_profiles 
 	WHERE matches_id = ? and win is not Null''', (match_id,)))
 
-def get_matches_ids(tourn_id: int, match_fase: str) -> list[int]:
 
+def get_matches_ids(tourn_id: int, match_fase: str) -> list[int]:
     match_ids = read_query('''SELECT id FROM matches 
-                      WHERE tournament_id = ? and match_phase = ?''', 
-                      (tourn_id, match_fase.lower()))
+                      WHERE tournament_id = ? and match_phase = ?''',
+                           (tourn_id, match_fase.lower()))
 
     return sorted(match_ids)
 
-def get_winners_ids(match_ids: list[int]) -> list[str]:
 
+def get_winners_ids(match_ids: list[int]) -> list[str]:
     winners = []
     for id in match_ids:
         winner_id = read_query('''SELECT mpp.player_profile_id 
@@ -185,14 +191,14 @@ def get_winners_ids(match_ids: list[int]) -> list[str]:
 
     return winners[::-1]
 
-def find_next_fase(current_fase: str) -> int:
 
+def find_next_fase(current_fase: str) -> int:
     for index, fase in enumerate(_MATCH_PHASES):
         if current_fase == fase:
             return index
 
-def get_players_names(players_ids: list[int]) -> list[str]:
 
+def get_players_names(players_ids: list[int]) -> list[str]:
     players_names = []
     for id in players_ids:
         data = read_query('''SELECT full_name FROM players_profiles
@@ -200,13 +206,14 @@ def get_players_names(players_ids: list[int]) -> list[str]:
         players_names.append(data[0][0])
     return players_names
 
-def check_player_in_match(player_id: int, match_id: int) -> bool:
 
+def check_player_in_match(player_id: int, match_id: int) -> bool:
     return any(
         read_query(
             '''SELECT 1 FROM matches_has_players_profiles
             WHERE matches_id = ? and player_profile_id = ?''',
             (match_id, player_id)))
+
 
 # matches_has_players_profiles
 
