@@ -99,8 +99,8 @@ class TournamentBase(BaseModel):
     title: str
     tour_format: str
     prize: int
-    match_format: str
-    participants: list[str]
+    match_format: Optional[str] | None = None
+    participants: list[str] | None = None
 
 
 class Tournament(TournamentBase):
