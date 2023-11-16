@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, constr
 from typing import Optional
 from common.validators import tournament_format_validator, match_format_validator, check_date
 from datetime import datetime
+from datetime import date
 
 
 class Player(BaseModel):
@@ -75,6 +76,7 @@ class MatchTournResponseMod(BaseModel):
     player_2: str
     date: datetime | str
 
+
 class MatchResponseMod(BaseModel):
     id: int
     tournament_title: str
@@ -82,6 +84,7 @@ class MatchResponseMod(BaseModel):
     player_2: str
     date: datetime | str
     match_fase: str
+
 
 class SetMatchScoreMod(BaseModel):
     tourn_id: int
@@ -91,16 +94,20 @@ class SetMatchScoreMod(BaseModel):
     pl_2_score: int
     match_finished: bool
 
-class Tournament(BaseModel):
-    id: Optional[int] = None
+
+class TournamentBase(BaseModel):
     title: str
     tour_format: str
     prize: int
+    match_format: str
+    participants: list[str]
+
+
+class Tournament(TournamentBase):
+    id: Optional[int] = None
     scheme_format: str | None = None
-    match_format: str | None = None
-    participants: list[str] | None = None
     matches: Optional[Match] | None = None
-    start_date: Optional[datetime] = None
+    start_date: Optional[date] = None
 
     @classmethod
     def from_query_result(cls, id, tour_format, title, prize):
@@ -111,12 +118,8 @@ class Tournament(BaseModel):
                    )
 
 
-class TournamentCreateModel(BaseModel):
-    id: int | None = None
-    title: str
-    tour_format: str
-    prize: int
-    match_format: str
+class TournamentCreateModel(TournamentBase):
+    start_date: date
 
 
 class League(BaseModel):
@@ -127,6 +130,7 @@ class League(BaseModel):
 class UpdateParticipantModel(BaseModel):
     old_player: str
     new_player: str
+
 
 class RequestsResponseModel(BaseModel):
     id: int
@@ -139,13 +143,15 @@ class RequestsResponseModel(BaseModel):
                    request=request,
                    user_id=user_id)
 
-class NewFase(BaseModel):
+
+class NewPhase(BaseModel):
     current_phase: str
 
 
 class Link_profile(BaseModel):
     user_id: int
     player_id: int
+
 
 class Request_Link_profile(BaseModel):
     player_id: int
