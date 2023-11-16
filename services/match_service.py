@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod, WinnerResponseMode
+from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod, WinnerResponseMode, MatchesResponseMod
 from common.validators import check_date
 from services import user_service, tournaments_service
 from common.validators import check_date, check_score, _MATCH_PHASES
@@ -275,3 +275,39 @@ def get_tournament_title(tourn_id: int):
     return read_query(
         '''SELECT title FROM tournaments
         WHERE id = ?''', (tourn_id,))
+
+def get_all_matches() -> list[MatchesResponseMod]:
+    
+    data = read_query('''SELECT m.id, full_name, score, date, t.title FROM matches m
+                                JOIN matches_has_players_profiles mp ON m.id = mp.matches_id
+                                JOIN tournaments t ON m.tournament_id = t.id
+                                JOIN players_profiles pp ON pp.id = mp.player_profile_id''')
+
+    all_matches = []
+    index = 0
+    while index < (len(data) - 1):
+        player_1_data = data[index]
+        player_2_data = data[index + 1]
+        match_id = player_1_data[0]
+        match_date = player_1_data[-2]
+        tourn_title = player_1_data[-1]
+
+        pl_1_name = player_1_data[1]
+        pl_1_score = str(player_1_data[2])
+        pl_2_name = player_2_data[1]
+        pl_2_score = str(player_2_data[2])
+
+        names_and_scores = pl_1_name + ' ' + pl_1_score + ' - ' + pl_2_score + ' ' + pl_2_name
+
+        match_resp = MatchesResponseMod(
+            match_id=match_id,
+            score=names_and_scores,
+            match_date=match_date,
+            tournament_title=tourn_title)
+        
+        
+        all_matches.append(match_resp)
+
+        index += 2
+    
+    return all_matches
