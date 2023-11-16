@@ -53,8 +53,8 @@ def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = D
     if not match_service.check_player_in_match(match_score.pl_2_id, match_id):
         raise BadRequest(f'Player #{match_score.pl_2_id} not found in match #{match_id}')
 
-    match_service.change_match_score(match_id, match_score)
-    return Response(status_code=200, content='Score changed successfully')
+    return match_service.change_match_score(match_id, match_score)
+    
 
 
 # @match_serivce.post("/")
