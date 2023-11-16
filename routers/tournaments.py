@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, Depends, Path, Body, Response
-from data.models import Tournament, Match, Player, UpdateParticipantModel, NewPhase, TournamentCreateModel
+from data.models import Tournament, Match, Player, UpdateParticipantModel, NewFase
 from common.validators import (tournament_format_validator, validate_tournament_start_date, validate_participants,
                                _MATCH_PHASES)
 from common.exceptions import NoContent, NotFound, Unauthorized, BadRequest
@@ -25,7 +25,7 @@ def get_all_tournaments(title: str = Query(None, description="Get tournament by 
 
 
 @tournaments_router.post("/")
-def create_tournament(tournament: TournamentCreateModel):
+def create_tournament(tournament: Tournament):
     # token: str = Depends(JWTBearer())): ----- Waiting for request implementation
     """Only director can create tournaments"""
     # ----------- check if user is authorized to create a tournament -------------------
@@ -39,21 +39,23 @@ def create_tournament(tournament: TournamentCreateModel):
     _ = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
          tournament.participants if not user_service.player_profile_exists(name)]
     # ---- make a variable players which get participants, when inserted in generate_game_schema the func empty it.--
-    players = tournament.participants
+    players = tournament.participants.copy()
     # ----- get the format which is for e.g. 'semi-final' etc. (Which will be good to go to match service and change it
     # everytime the matches change) --------
-    tournament = tournaments_service.create_tournament(tournament)
+    tournament.scheme_format = tournaments_service.get_scheme_format(len(tournament.participants))
+    # ----- this return dict of all player which are randomly separated by couples
+    generated_players_schema = tournaments_service.generate_game_schema(players)
     if tournament.tour_format == "Knockout":
-        player_schema = tournaments_service.generate_knockout_schema(tournament.participants)
-        tournament.scheme_format = tournaments_service.get_scheme_format(len(players))
+        tournament.tour_format = "Knockout"
     elif tournament.tour_format == "League":
-        player_schema = tournaments_service.generate_league_schema(players)
+        tournament.tour_format = "League"
     # ---- creating tournament in the db -------
+    tournament = tournaments_service.create_tournament(tournament)
+    # match_schema = match_service.create_match(tournament)
     # ----- create a list of all matches in the tournament ----
-    match_schema = match_service.create_match_v2(tournament, player_schema)
+    match_schema = match_service.create_match_v2(tournament, generated_players_schema)
     # assign them to the object attribute and return it
     tournament.matches = match_schema
-    tournament.participants = players
     return tournament
 
 
@@ -94,7 +96,7 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
 
 
 @tournaments_router.put("/{tournament_id}/phases")
-def move_phase(tournament_id: int, current_phase: NewPhase):
+def move_phase(tournament_id: int, current_phase: NewFase):
     tournament_exists = tournaments_service.tourn_exists_by_id(tournament_id)
     if not tournament_exists:
         raise NotFound(f'Tournament #{tournament_id} not found.')
@@ -105,4 +107,4 @@ def move_phase(tournament_id: int, current_phase: NewPhase):
     match_ids = match_service.get_matches_ids(tournament_id, current_phase.current_phase)
     winners_reversed = match_service.get_winners_ids(match_ids)
 
-    return match_service.create_next_phase(winners_reversed, current_phase.current_phase, tournament_id)
+    return match_service.create_next_fase(winners_reversed, current_phase.current_phase, tournament_id)
