@@ -3,7 +3,7 @@ from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchR
 from common.validators import check_date
 from services import user_service, tournaments_service
 from common.validators import check_date, check_score, _MATCH_PHASES
-from datetime import datetime
+from datetime import datetime, date
 from common.exceptions import BadRequest
 from fastapi import Response
 
@@ -311,3 +311,13 @@ def get_all_matches() -> list[MatchesResponseMod]:
         index += 2
     
     return all_matches
+
+def set_match_date(match_id: int, m_date: datetime):
+    
+    ans = update_query('''UPDATE matches SET date = ?
+                 WHERE id = ?''',(m_date, match_id))
+    
+    if not ans:
+        raise BadRequest(f'Something went wrong.')
+    
+    return Response(status_code=200, content=f'Match #{match_id} date set to: {m_date}')
