@@ -28,8 +28,9 @@ def get_all_tournaments(title, tour_format):
 def get_tournament_by_id(tour_id: int):
     data = read_query('SELECT * FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
-    participants = get_tournament_participants(tournament.id)
-    tournament.scheme_format = get_scheme_format(len(participants))
+    tournament.participants = get_tournament_participants(tournament.id)
+    # if tournament.scheme_format
+    # tournament.scheme_format = get_scheme_format(len(get_tournament_participants(tournament.id)))
     return tournament
 
 
@@ -48,10 +49,14 @@ def create_tournament(tournament: TournamentCreateModel) -> Tournament:
 
 
 # ------ this will be moved to a player_service most likely but for now is here to test tournaments get by id -----
-def get_tournament_participants(tour_id: int):
-    data = read_query('SELECT player_profile_id FROM tournaments_has_players_profiles '
-                      'WHERE tournament_id = ?', (tour_id,))
-    participants = ((Player.from_query_result(*row) for row in data), None)
+def get_tournament_participants(tour_id: int) -> list[Player]:
+    data = read_query('''
+        SELECT players_profiles.id, players_profiles.full_name, players_profiles.country, players_profiles.club
+        FROM tournaments_has_players_profiles
+        JOIN players_profiles ON tournaments_has_players_profiles.player_profile_id = players_profiles.id
+        WHERE tournaments_has_players_profiles.tournament_id = ?
+    ''', (tour_id,))
+    participants = [Player.from_query_result(*row) for row in data]
     return participants
 
 
@@ -90,6 +95,8 @@ def generate_knockout_schema(players):
     match_players.append([first_match_player1, first_match_player2])
     match_players.extend(generate_knockout_schema(players))
     return match_players
+
+
 # output : [['Player1', 'Player4'], ['Player2', 'Player3']]
 
 
@@ -124,3 +131,9 @@ def tourn_exists_by_id(tourn_id: int) -> bool:
     return any(
         read_query(
             '''SELECT 1 FROM tournaments WHERE id = ?''', (tourn_id,)))
+
+
+def insert_participants_into_tournament(player_profiles_id: list[int], tournament_id):
+    for player_id in player_profiles_id:
+        insert_query('''INSERT INTO tournaments_has_players_profiles(tournament_id, player_profile_id)
+                            VALUES(?,?)''', (tournament_id, player_id))
