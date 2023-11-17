@@ -4,7 +4,7 @@ from services import tournaments_service, match_service
 from common.exceptions import NoContent, NotFound, BadRequest, Unauthorized
 from authentication.jwt_bearer import JWTBearer
 from authentication.auth import get_user_from_token
-from data.models import Match, Tournament, SetMatchScoreMod
+from data.models import Match, Tournament, SetMatchScoreMod, SetMatchDate
 
 match_router = APIRouter(prefix='/matches')
 
@@ -55,6 +55,26 @@ def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = D
 
     return match_service.change_match_score(match_id, match_score)
     
+@match_router.put('/{match_id}/set-date')
+def set_match_date(match_id: int, match_date: SetMatchDate, token: str = Depends(JWTBearer())):
+    '''datetime input example:
+            "date": "2023-11-11 15:30"
+            '''
+    user = get_user_from_token(token)
+
+    if match_date.date < datetime.now():
+        raise BadRequest(f'Datetime cannot be in the past.')
+    
+    if match_service.check_match_finished(match_id):
+        raise BadRequest(f'Match #{match_id} already finished, cannot change date.')
+
+    if user.user_role.lower() != 'director':
+        raise Unauthorized(f'Request denied. You are not Director.')
+
+    if not match_service.match_exists(match_id):
+        raise NotFound(f'Match #{match_id} not found.')
+    
+    return match_service.set_match_date(match_id, match_date.date)
 
 
 # @match_serivce.post("/")
