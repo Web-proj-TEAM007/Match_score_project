@@ -10,7 +10,7 @@ from fastapi import Response
 def create_user(email: str, password: str):
     # validation for the email
     if email_exists(email):
-        return BadRequest(content=f'User with {email} is already registered')
+        raise BadRequest(f'User with {email} is already registered')
     # bcrypt is being used for the purposes of hashing the password / 'utf-8' is the algorithm, gensalt() is
     # generating random 'salt'(bytes) which are added to the hashed password for secure purposes
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
