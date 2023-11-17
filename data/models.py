@@ -167,3 +167,7 @@ class MatchesResponseMod(BaseModel):
     score: str
     match_date: datetime | None
     tournament_title: str
+
+class SetMatchDate(BaseModel):
+    date: datetime
+
