@@ -6,7 +6,7 @@ from common.exceptions import NoContent, NotFound, Unauthorized, BadRequest
 from services import tournaments_service, match_service, user_service
 from authentication.jwt_bearer import JWTBearer
 from authentication.auth import get_user_from_token
-from datetime import datetime
+from datetime import date
 
 tournaments_router = APIRouter(prefix='/tournaments')
 
@@ -19,8 +19,9 @@ def get_all_tournaments(title: str = Query(None, description="Get tournament by 
     if not tournaments:
         return Response(status_code=204, headers={'detail': 'No available tournaments'})
     # ---------------- Add all matches for the specific tournament -------------------
-    for tour in tournaments:
-        tour.matches = match_service.get_matches_for_tournament(tour.id)
+    for tournament in tournaments:
+        tournament.matches = match_service.get_matches_for_tournament(tournament.id)
+        tournament.participants = tournaments_service.get_tournament_participants(tournament.id)
     return tournaments
 
 
@@ -36,24 +37,22 @@ def create_tournament(tournament: TournamentCreateModel):
     if tournaments_service.tournament_exists(tournament.title):
         return Response(f'{tournament.title} already exists')
     # ---------- check if each player is already existing, if not create one and link it to profile --------
-    _ = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
-         tournament.participants if not user_service.player_profile_exists(name)]
-    # ---- make a variable players which get participants, when inserted in generate_game_schema the func empty it.--
-    players = tournament.participants
-    # ----- get the format which is for e.g. 'semi-final' etc. (Which will be good to go to match service and change it
-    # everytime the matches change) --------
+    players = tournament.participants.copy()
+    player_profiles_id = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
+                          players if not user_service.player_profile_exists(name)]
     tournament = tournaments_service.create_tournament(tournament)
+    _ = tournaments_service.insert_participants_into_tournament(player_profiles_id, tournament.id)
     if tournament.tour_format == "Knockout":
-        player_schema = tournaments_service.generate_knockout_schema(tournament.participants)
-        tournament.scheme_format = tournaments_service.get_scheme_format(len(players))
+        player_schema = tournaments_service.generate_knockout_schema(players)
+        tournament.scheme_format = tournaments_service.get_scheme_format(len(tournament.participants))
     elif tournament.tour_format == "League":
+        tournament.scheme_format = "League"
         player_schema = tournaments_service.generate_league_schema(players)
     # ---- creating tournament in the db -------
     # ----- create a list of all matches in the tournament ----
     match_schema = match_service.create_match_v2(tournament, player_schema)
     # assign them to the object attribute and return it
     tournament.matches = match_schema
-    tournament.participants = players
     return tournament
 
 
@@ -63,23 +62,20 @@ def get_tournament_by_id(tournament_id: int = Query(..., description='Enter desi
     if not tournament:
         raise NotFound(detail='No such tournament')
     tournament.matches = match_service.get_matches_for_tournament(tournament.id)
-    tournament.participants = tournaments_service.get_tournament_participants(tournament.id)
     return tournament
-    # here will need to see how the matches are returned so i can make tournament start date by the first match that is
-    # going to be played that day
 
 
 @tournaments_router.patch("/manage-event/{tour_id}")
 def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'),
-                      change_tournament_start_date: datetime = Query(None,
-                                                                     description='Change tournament start date'),
+                      change_tournament_start_date: date = Query(None,
+                                                                 description='Change tournament start date'),
                       update_participants: UpdateParticipantModel = Body(None,
-                                                                         description='Update participants'),
-                      token: str = Depends(JWTBearer())):
+                                                                         description='Update participants')):
+    # token: str = Depends(JWTBearer())):
     """Only director can manage tournaments"""
-    user = get_user_from_token(token)
-    if user.user_role != 'Director':
-        raise Unauthorized(content='Only directors can manage a tournament')
+    # user = get_user_from_token(token)
+    # if user.user_role != 'Director':
+    #     raise Unauthorized(content='Only directors can manage a tournament')
     tournament = tournaments_service.get_tournament_by_id(tour_id)
     if not tournament:
         raise NotFound(f'Tournament with id: {tour_id}, does not exist.')
@@ -89,8 +85,6 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
         validate_participants(tournament, update_participants)
     result = tournaments_service.manage_tournament(tournament, change_tournament_start_date, update_participants)
     return result
-
-
 
 
 @tournaments_router.put("/{tournament_id}/phases")
