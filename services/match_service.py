@@ -2,7 +2,7 @@ from data.database import read_query, update_query, insert_query
 from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod, WinnerResponseMode, MatchesResponseMod
 from common.validators import check_date
 from services import user_service, tournaments_service
-from common.validators import check_date, check_score, _MATCH_PHASES
+from common.validators import check_date, check_score, _MATCH_PHASES, _SORT_BY_VAL
 from datetime import datetime, date
 from common.exceptions import BadRequest
 from fastapi import Response
@@ -276,12 +276,24 @@ def get_tournament_title(tourn_id: int):
         '''SELECT title FROM tournaments
         WHERE id = ?''', (tourn_id,))
 
-def get_all_matches() -> list[MatchesResponseMod]:
-    
-    data = read_query('''SELECT m.id, full_name, score, date, t.title FROM matches m
+def get_all_matches(sort: str | None = None, sort_by: str | None = None) -> list[MatchesResponseMod]:
+
+    if sort_by:
+
+        if sort_by not in _SORT_BY_VAL:
+            raise BadRequest(f'Cannot sort by: {sort_by}')
+        
+        sort_by = 'm.' + sort_by
+        data = read_query(f'''SELECT m.id, full_name, mp.score, m.date, t.title FROM matches m
                                 JOIN matches_has_players_profiles mp ON m.id = mp.matches_id
                                 JOIN tournaments t ON m.tournament_id = t.id
-                                JOIN players_profiles pp ON pp.id = mp.player_profile_id''')
+                                JOIN players_profiles pp ON pp.id = mp.player_profile_id
+                                ORDER BY {sort_by} {sort}''')
+    else:
+        data = read_query('''SELECT m.id, full_name, score, date, t.title FROM matches m
+                                    JOIN matches_has_players_profiles mp ON m.id = mp.matches_id
+                                    JOIN tournaments t ON m.tournament_id = t.id
+                                    JOIN players_profiles pp ON pp.id = mp.player_profile_id''')
 
     all_matches = []
     index = 0
@@ -321,3 +333,4 @@ def set_match_date(match_id: int, m_date: datetime):
         raise BadRequest(f'Something went wrong.')
     
     return Response(status_code=200, content=f'Match #{match_id} date set to: {m_date}')
+
