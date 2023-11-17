@@ -6,6 +6,7 @@ _TOURNAMENT_FORMATS = ('Knockout', 'League')
 _MATCH_FORMATS = ('Time limited', 'Score limited')
 _MATCH_PHASES = ('final', 'semi-final', 'quarterfinals', 'eight-final')
 
+
 def tournament_format_validator(tour_format: str):
     if tour_format not in _TOURNAMENT_FORMATS:
         raise BadRequest(f"Invalid format {tour_format}, Option must be 'Knockout' or 'League'")
@@ -30,13 +31,13 @@ def validate_tournament_start_date(old_date, new_date):
 
 
 def validate_participants(tournament, update_participants):
-    _ = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
-         update_participants if not user_service.player_profile_exists(name)]
     if update_participants.new_player in tournament.participants:
         raise BadRequest(f'Player: {update_participants.new_player} is already in the tournament')
     if update_participants.old_player not in tournament.participants:
         raise NotFound(f'Player: {update_participants.old_player} is not part of the tournament participants')
-    
+    _ = user_service.create_player_statistic(user_service.create_player_profile(update_participants.new_player))
+
+
 def check_score(score: int | None):
 
     if score is None:
