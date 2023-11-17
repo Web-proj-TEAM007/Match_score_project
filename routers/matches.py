@@ -8,13 +8,19 @@ from data.models import Match, Tournament, SetMatchScoreMod, SetMatchDate
 
 match_router = APIRouter(prefix='/matches')
 
+# def get_all_matches(sort_by_date: datetime = Query(None, description='Filter by day in a following format '
+#                                                                      'YYYY-MM-DDTHH:MM:SS eg. 2023-10-21T00:00:00 :'),
+#                     sort_by_tournament_id: int = Query(default=None, description='Search by topic id')):
 
 @match_router.get("/")
-def get_all_matches(sort_by_date: datetime = Query(None, description='Filter by day in a following format '
-                                                                     'YYYY-MM-DDTHH:MM:SS eg. 2023-10-21T00:00:00 :'),
-                    sort_by_tournament_id: int = Query(default=None, description='Search by topic id')):
-    """You can get all existing matches, optional filter features"""
-    matches = match_service.get_all_matches()
+def get_all_matches(sort: str | None = 'asc', sort_by: str | None = None):
+    # can be sorted by 'date' and 'tournament_id'
+    
+    if sort_by:
+        matches = match_service.get_all_matches(sort, sort_by)
+    else:
+        matches = match_service.get_all_matches()
+
     if not matches:
         raise NotFound(content='No matches')
     
