@@ -34,7 +34,7 @@ def validate_tournament_start_date(old_date, new_date):
 def validate_participants(tournament, update_participants):
     if update_participants.new_player in tournament.participants:
         raise BadRequest(f'Player: {update_participants.new_player} is already in the tournament')
-    if update_participants.old_player not in tournament.participants:
+    if not any(player.full_name == update_participants.old_player for player in tournament.participants):
         raise NotFound(f'Player: {update_participants.old_player} is not part of the tournament participants')
     _ = user_service.create_player_statistic(user_service.create_player_profile(update_participants.new_player))
 
