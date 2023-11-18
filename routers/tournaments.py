@@ -80,7 +80,8 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
     if not tournament:
         raise NotFound(f'Tournament with id: {tour_id}, does not exist.')
     if change_tournament_start_date:
-        validate_tournament_start_date(tournament.start_date, change_tournament_start_date)
+        if tournament.start_date:
+            validate_tournament_start_date(tournament.start_date, change_tournament_start_date)
     if update_participants:
         validate_participants(tournament, update_participants)
     result = tournaments_service.manage_tournament(tournament, change_tournament_start_date, update_participants)
