@@ -248,12 +248,16 @@ def check_player_in_match(player_id: int, match_id: int) -> bool:
 def update_participants_for_matches(tournament, old_player, new_player):
     matches_ids = user_service.check_if_player_have_assigned_matches(tournament, old_player)
     if matches_ids:
-        matches = [get_match_by_id(match_id) for match_id in matches_ids]
-        for match in matches:
+        for match in matches_ids:
+            match_id = match[0]
             update_query(
                 "UPDATE matches_has_players_profiles SET player_profile_id = ? WHERE matches_id = ? AND "
                 "player_profile_id = ?",
-                new_player.id, match.id, old_player.id)
+                (new_player.id, match_id, old_player.id))
+        update_query(
+            "UPDATE tournaments_has_players_profiles SET player_profile_id = ? WHERE tournament_id = ? AND "
+            "player_profile_id = ?",
+            (new_player.id, tournament.id, old_player.id))
         return True
     return False
 
