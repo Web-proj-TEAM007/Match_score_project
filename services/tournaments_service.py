@@ -1,11 +1,12 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, TournamentCreateModel
+from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel
 import random
 from common.validators import tournament_format_validator
 from common.exceptions import BadRequest
 from fastapi import Response
 from services import user_service, match_service
 import itertools
+from datetime import date
 
 
 def get_all_tournaments(title, tour_format):
@@ -26,7 +27,7 @@ def get_all_tournaments(title, tour_format):
 
 
 def get_tournament_by_id(tour_id: int):
-    data = read_query('SELECT * FROM tournaments WHERE id = ?', (tour_id,))
+    data = read_query('SELECT id, title, format, prize FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
     tournament.participants = get_tournament_participants(tournament.id)
     # if tournament.scheme_format
@@ -60,13 +61,15 @@ def get_tournament_participants(tour_id: int) -> list[Player]:
     return participants
 
 
-def manage_tournament(tournament, new_date, change_participants):
+def manage_tournament(tournament, new_date: date | None, change_participants: UpdateParticipantModel | None):
     response = []
     if new_date:
-        old_date = tournament.start_date
-        update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", new_date, tournament.id)
-        response.append(Response(status_code=200, content=f'Successfully changed tournament start date from '
-                                                          f'{old_date} to {new_date}'))
+        pass
+        # Maybe we will need tournament start_date column in the DB
+        # old_date = tournament.start_date
+        # update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", (new_date, tournament.id))
+        # response.append(Response(status_code=200, content=f'Successfully changed tournament start date from '
+        #                                                   f'{old_date} to {new_date}'))
     if change_participants:
         new_player = user_service.get_player_profile_by_fullname(change_participants.new_player)
         old_player = user_service.get_player_profile_by_fullname(change_participants.old_player)
@@ -74,12 +77,13 @@ def manage_tournament(tournament, new_date, change_participants):
         tournament.participants.append(new_player)
         if match_service.update_participants_for_matches(tournament, old_player, new_player):
             response.append(Response(status_code=200, content=f'Successfully changed tournament participant: '
-                                                              f'{old_player} with {new_player} and updated upcoming '
-                                                              f'matches with the new player'))
-        response.append(Response(status_code=200, content=f'Successfully changed tournament participant: {old_player} '
-                                                          f'with {new_player}, no matches are updated'))
+                                                              f'{old_player.full_name} with {new_player.full_name} '
+                                                              f'and updated upcoming matches with the new player'))
+        else:
+            response.append(Response(status_code=200, content=f'Successfully changed tournament participant: '
+                                                              f'{old_player.full_name} with {new_player.full_name}, '
+                                                              f'no matches are updated'))
     return response
-
 
 def generate_knockout_schema(players):
     match_players = []
