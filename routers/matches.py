@@ -29,7 +29,7 @@ def get_all_matches(sort: str | None = 'asc',
         matches = match_service.get_all_matches()
 
     if not matches:
-        raise Response(status_code=404, content='No matches')
+        return Response(status_code=200, content='No matches')
     
     return matches
 
