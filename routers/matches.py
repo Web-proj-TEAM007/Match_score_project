@@ -13,16 +13,23 @@ match_router = APIRouter(prefix='/matches')
 #                     sort_by_tournament_id: int = Query(default=None, description='Search by topic id')):
 
 @match_router.get("/")
-def get_all_matches(sort: str | None = 'asc', sort_by: str | None = None):
+def get_all_matches(sort: str | None = 'asc', 
+                    sort_by: str | None = None, 
+                    page: int | None = None, 
+                    page_size: int | None = 2):
     # can be sorted by 'date' and 'tournament_id'
     
-    if sort_by:
+    if page and sort_by:
+        matches = match_service.paginating_matches(page, page_size, sort, sort_by)
+    elif page and not sort_by:
+        matches = match_service.paginating_matches(page, page_size)
+    elif sort_by:
         matches = match_service.get_all_matches(sort, sort_by)
     else:
         matches = match_service.get_all_matches()
 
     if not matches:
-        raise NotFound(content='No matches')
+        raise Response(status_code=404, content='No matches')
     
     return matches
 
