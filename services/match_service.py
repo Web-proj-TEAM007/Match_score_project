@@ -25,8 +25,6 @@ def create_next_phase(winner_ids: list[int],
     
     next_phase = _MATCH_PHASES[ind]
 
-    
-
     players_names = get_players_names(winner_ids)
 
     n = len(winner_ids) // 2
@@ -56,8 +54,6 @@ def create_next_phase(winner_ids: list[int],
 
     return matches
 
-
-# matches_has_players_profiles
 
 def get_match_by_id(match_id: int):
     data = read_query('''SELECT m.matches_id, t.title, pl.full_name, m.score, mt.date, mt.match_phase 
@@ -242,9 +238,6 @@ def check_player_in_match(player_id: int, match_id: int) -> bool:
             (match_id, player_id)))
 
 
-# matches_has_players_profiles
-
-
 def update_participants_for_matches(tournament, old_player, new_player):
     matches_ids = user_service.check_if_player_have_assigned_matches(tournament, old_player)
     if matches_ids:
@@ -261,6 +254,7 @@ def update_participants_for_matches(tournament, old_player, new_player):
         return True
     return False
 
+
 def check_if_match_final(match_id: int) -> bool:
 
     return any(
@@ -268,17 +262,20 @@ def check_if_match_final(match_id: int) -> bool:
             '''SELECT 1 FROM matches
             WHERE id = ? and match_phase = ?''', (match_id, 'final')))
 
+
 def get_player_name_club_country(player_id: int):
 
     return read_query(
         '''SELECT full_name, country, club FROM players_profiles
         WHERE id = ?''', (player_id,))
 
+
 def get_tournament_title(tourn_id: int):
 
     return read_query(
         '''SELECT title FROM tournaments
         WHERE id = ?''', (tourn_id,))
+
 
 def get_all_matches(sort: str | None = None, sort_by: str | None = None) -> list[MatchesResponseMod]:
 
@@ -298,6 +295,57 @@ def get_all_matches(sort: str | None = None, sort_by: str | None = None) -> list
                                     JOIN matches_has_players_profiles mp ON m.id = mp.matches_id
                                     JOIN tournaments t ON m.tournament_id = t.id
                                     JOIN players_profiles pp ON pp.id = mp.player_profile_id''')
+    
+    return packaging_for_all_matches(data)
+
+
+def set_match_date(match_id: int, m_date: datetime):
+    
+    ans = update_query('''UPDATE matches SET date = ?
+                 WHERE id = ?''',(m_date, match_id))
+    
+    if not ans:
+        raise BadRequest(f'Something went wrong.')
+    
+    return Response(status_code=200, content=f'Match #{match_id} date set to: {m_date}')
+
+
+def paginating_matches(page: int, 
+                       page_size: int | None = 2, 
+                       sort: str | None = None, 
+                       sort_by: str | None = None):
+
+    if page <= 0:
+        return BadRequest('Page must be equal to or higher than 1.')
+    page = (int(page)-1) * int(page_size)
+
+    if sort:
+
+        data = read_query(f'''WITH pag AS                               
+                                    (SELECT m.id, m.format, m.date, m.tournament_id, m.match_phase 
+                                        FROM matches m
+                                        ORDER BY {sort_by} {sort}
+                                        OFFSET {page} ROWS FETCH NEXT {page_size} ROWS ONLY)
+                                SELECT pa.id, pp.full_name, mp.score, m.date, t.title FROM pag pa
+                                JOIN matches m ON m.id = pa.id
+                                JOIN matches_has_players_profiles mp ON m.id = mp.matches_id
+                                JOIN tournaments t ON m.tournament_id = t.id
+                                JOIN players_profiles pp ON pp.id = mp.player_profile_id''')
+    else:
+        data = read_query(f'''WITH pag AS                               
+                                    (SELECT m.id, m.format, m.date, m.tournament_id, m.match_phase 
+                                        FROM matches m
+                                        OFFSET {page} ROWS FETCH NEXT {page_size} ROWS ONLY)
+                                SELECT pa.id, pp.full_name, mp.score, m.date, t.title FROM pag pa
+                                JOIN matches m ON m.id = pa.id
+                                JOIN matches_has_players_profiles mp ON m.id = mp.matches_id
+                                JOIN tournaments t ON m.tournament_id = t.id
+                                JOIN players_profiles pp ON pp.id = mp.player_profile_id''')
+    
+    return packaging_for_all_matches(data)
+
+
+def packaging_for_all_matches(data: list) -> list[MatchesResponseMod]:
 
     all_matches = []
     index = 0
@@ -327,14 +375,3 @@ def get_all_matches(sort: str | None = None, sort_by: str | None = None) -> list
         index += 2
     
     return all_matches
-
-def set_match_date(match_id: int, m_date: datetime):
-    
-    ans = update_query('''UPDATE matches SET date = ?
-                 WHERE id = ?''',(m_date, match_id))
-    
-    if not ans:
-        raise BadRequest(f'Something went wrong.')
-    
-    return Response(status_code=200, content=f'Match #{match_id} date set to: {m_date}')
-
