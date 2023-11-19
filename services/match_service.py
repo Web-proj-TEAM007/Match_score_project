@@ -319,7 +319,7 @@ def paginating_matches(page: int,
         return BadRequest('Page must be equal to or higher than 1.')
     page = (int(page)-1) * int(page_size)
 
-    if sort:
+    if sort_by:
 
         data = read_query(f'''WITH pag AS                               
                                     (SELECT m.id, m.format, m.date, m.tournament_id, m.match_phase 
