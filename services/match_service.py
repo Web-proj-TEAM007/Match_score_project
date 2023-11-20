@@ -166,7 +166,7 @@ def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None | W
             return WinnerResponseMode(name=namee,
                                       club=clubb,
                                       country=countryy,
-                                      tournament_won=tourn_name.title)
+                                      tournament_won=tourn_name)
     else:
         raise ValueError('Мача e X, кво праим?')
     
