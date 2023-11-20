@@ -17,8 +17,8 @@ class Unauthorized(HTTPException):
 
 
 class NoContent(HTTPException):
-    def __init__(self, detail=''):
-        super().__init__(status_code=204, detail=detail)
+    def __init__(self):
+        super().__init__(status_code=204)
 
 
 class InternalServerError(HTTPException):
