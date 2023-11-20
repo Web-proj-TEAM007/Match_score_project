@@ -147,3 +147,12 @@ def get_tournament_start_date(tournament):
     result = matches.sorted(key=lambda x: x.date, reverse=True)
     first_match_start_date = result[0]
     return first_match_start_date
+
+
+def separate_tournament_format(tournament):
+    # 'Time Limited: 60 minutes'
+    value = [char for char in tournament.match_format if char.isdigit()]
+    match_format = tournament.match_format[:":"]
+    if not value:
+        raise BadRequest('Something went wrong')
+    return match_format, value
