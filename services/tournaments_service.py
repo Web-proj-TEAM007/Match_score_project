@@ -85,6 +85,7 @@ def manage_tournament(tournament, new_date: date | None, change_participants: Up
                                                               f'no matches are updated'))
     return response
 
+
 def generate_knockout_schema(players):
     match_players = []
     players_count = len(players)
@@ -123,21 +124,26 @@ def get_scheme_format(players_count):
         raise BadRequest('Players number must be 2,4,8 or 16.')
     elif players_count > 16:
         raise BadRequest('Too many players, max is 16.')
-    else:
-        return 'Poveche nedavam'
 
 
 def tournament_exists(tour_title: str) -> bool:
     return any(read_query('''SELECT 1 FROM tournaments WHERE title = ?''', (tour_title,)))
 
 
-def tourn_exists_by_id(tourn_id: int) -> bool:
+def tournament_exists_by_id(tournament_id: int) -> bool:
     return any(
         read_query(
-            '''SELECT 1 FROM tournaments WHERE id = ?''', (tourn_id,)))
+            '''SELECT 1 FROM tournaments WHERE id = ?''', (tournament_id,)))
 
 
 def insert_participants_into_tournament(player_profiles_id: list[int], tournament_id):
     for player_id in player_profiles_id:
         insert_query('''INSERT INTO tournaments_has_players_profiles(tournament_id, player_profile_id)
                             VALUES(?,?)''', (tournament_id, player_id))
+
+
+def get_tournament_start_date(tournament):
+    matches = match_service.get_matches_for_tournament(tournament.id)
+    result = matches.sorted(key=lambda x: x.date, reverse=True)
+    first_match_start_date = result[0]
+    return first_match_start_date
