@@ -122,12 +122,23 @@ def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None | W
     pl_2_id = match_score.pl_2_id
     pl_1_score = match_score.pl_1_score
     pl_2_score = match_score.pl_2_score
-
+    tournament = tournaments_service.get_tournament_by_id(match_score.tourn_id)
+    match_format, value = tournaments_service.separate_tournament_format(tournament)
+    match = get_match_by_id(match_id)
     is_final = check_if_match_final(match_id)
     match_status = match_score.match_finished
 
     if not match_status:
-
+        if match_format == 'Score Limited':
+            if pl_1_score > value or pl_2_score > value:
+        # Тука мача свършва ако са надминате ограниченията за резултата
+                match_score.match_finished = True
+        #       Имплемнтация за statistic
+        elif match_format == 'Time Limited':
+            if match.date + value > datetime.now(): # Shte go razgledam kak da se formatira i da gi sumira tochno
+        #       Тука мача свършва ако са надминате ограниченията за резултата
+                match_score.match_finished = True
+        #       ako i dvete proverki minavat togava da vlizame v update_query
         update_query('''UPDATE matches_has_players_profiles
                         SET score = ?
                         WHERE matches_id = ? and player_profile_id = ?''', (pl_1_score, match_id, pl_1_id))
