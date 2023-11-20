@@ -79,7 +79,7 @@ def get_match_by_id(match_id: int):
     return d_match
 
 
-def create_match_v2(tournament: Tournament, players: list[list[str]] | tuple) -> list[MatchTournResponseMod]:
+def create_matches(tournament: Tournament, players: list[list[str]] | tuple) -> list[MatchTournResponseMod]:
     matches = []
     # Randomly assigned players that come like argument from create_tournament
     # = [['Player1', 'Player4'], ['Player2', 'Player3']]
@@ -117,7 +117,7 @@ def get_participants_ids(participants: list[str]) -> list[int]:
     return players_ids
 
 
-def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None:
+def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> None | WinnerResponseMode:
     pl_1_id = match_score.pl_1_id
     pl_2_id = match_score.pl_2_id
     pl_1_score = match_score.pl_1_score
