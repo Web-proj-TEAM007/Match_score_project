@@ -25,9 +25,11 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`tournaments` (
   `format` VARCHAR(45) NOT NULL,
   `title` VARCHAR(45) NOT NULL,
   `prize` INT(11) NULL DEFAULT NULL,
+  `start_date` DATETIME NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `title_UNIQUE` (`title` ASC) VISIBLE)
 ENGINE = InnoDB
+AUTO_INCREMENT = 3
 DEFAULT CHARACTER SET = latin1;
 
 
@@ -37,7 +39,7 @@ DEFAULT CHARACTER SET = latin1;
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`matches` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `format` VARCHAR(45) NOT NULL,
-  `date` DATETIME NOT NULL,
+  `date` DATETIME NULL DEFAULT NULL,
   `tournament_id` INT(11) NOT NULL,
   `match_phase` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`id`),
@@ -48,6 +50,7 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`matches` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
+AUTO_INCREMENT = 9
 DEFAULT CHARACTER SET = latin1;
 
 
@@ -62,7 +65,7 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_profiles` (
   `user_id` INT(11) NULL DEFAULT NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB
-AUTO_INCREMENT = 6
+AUTO_INCREMENT = 14
 DEFAULT CHARACTER SET = latin1;
 
 
@@ -92,6 +95,32 @@ DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
+-- Table `matchscore_db`.`matches_league`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `matchscore_db`.`matches_league` (
+  `matches_id` INT(11) NOT NULL,
+  `players_profiles_id` INT(11) NOT NULL,
+  `score` INT(11) NOT NULL,
+  `win` TINYINT(4) NULL DEFAULT NULL,
+  `pts` INT(11) NOT NULL,
+  PRIMARY KEY (`matches_id`, `players_profiles_id`),
+  INDEX `fk_matches_has_players_profiles1_players_profiles1_idx` (`players_profiles_id` ASC) VISIBLE,
+  INDEX `fk_matches_has_players_profiles1_matches1_idx` (`matches_id` ASC) VISIBLE,
+  CONSTRAINT `fk_matches_has_players_profiles1_matches1`
+    FOREIGN KEY (`matches_id`)
+    REFERENCES `matchscore_db`.`matches` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_matches_has_players_profiles1_players_profiles1`
+    FOREIGN KEY (`players_profiles_id`)
+    REFERENCES `matchscore_db`.`players_profiles` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = latin1;
+
+
+-- -----------------------------------------------------
 -- Table `matchscore_db`.`players_statistics`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_statistics` (
@@ -111,6 +140,7 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_statistics` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
+AUTO_INCREMENT = 9
 DEFAULT CHARACTER SET = latin1;
 
 
@@ -121,7 +151,7 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`users` (
   `id` INT(11) NOT NULL AUTO_INCREMENT,
   `email` TINYTEXT NOT NULL,
   `password` TINYTEXT NOT NULL,
-  `player_profile_id` INT(11) NULL,
+  `player_profile_id` INT(11) NULL DEFAULT NULL,
   `user_role` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE INDEX `email_UNIQUE` USING HASH (`email`) VISIBLE,
@@ -132,7 +162,7 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`users` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
-AUTO_INCREMENT = 7
+AUTO_INCREMENT = 9
 DEFAULT CHARACTER SET = latin1;
 
 
