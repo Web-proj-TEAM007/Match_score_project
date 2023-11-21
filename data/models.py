@@ -171,3 +171,24 @@ class MatchesResponseMod(BaseModel):
 class SetMatchDate(BaseModel):
     date: datetime
 
+
+class PlayerStatistics(Player):
+    matches_played: int
+    matches_won: int
+    tournaments_played: int
+    tournaments_won: int
+    ratio: float
+
+    @classmethod
+    def from_query_result(cls, id, full_name, country, 
+                          sport_club, matches_played, matches_won, 
+                          tournaments_played, tournaments_won, ratio):
+        return cls(id=id,
+                   full_name=full_name,
+                   country=country,
+                   sport_club=sport_club,
+                   matches_played=matches_played,
+                   matches_won=matches_won,
+                   tournaments_played=tournaments_played,
+                   tournaments_won=tournaments_won,
+                   ratio=ratio)
