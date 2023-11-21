@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel
+from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, Match
 import random
 from common.validators import tournament_format_validator
 from common.exceptions import BadRequest
@@ -10,7 +10,7 @@ from datetime import date
 
 
 def get_all_tournaments(title, tour_format):
-    query = "SELECT id, title, format, prize FROM tournaments"
+    query = "SELECT id, title, format, prize, start_date FROM tournaments"
     params = []
     where_clauses = []
     if title:
@@ -27,7 +27,7 @@ def get_all_tournaments(title, tour_format):
 
 
 def get_tournament_by_id(tour_id: int):
-    data = read_query('SELECT id, title, format, prize FROM tournaments WHERE id = ?', (tour_id,))
+    data = read_query('SELECT id, title, format, prize, start_date FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
     tournament.participants = get_tournament_participants(tournament.id)
     # if tournament.scheme_format
@@ -36,8 +36,9 @@ def get_tournament_by_id(tour_id: int):
 
 
 def create_tournament(tournament: TournamentCreateModel) -> Tournament:
-    generated_id = insert_query("INSERT INTO tournaments (format, title, prize) VALUES (?, ?, ?)",
-                                (tournament.tour_format, tournament.title, tournament.prize))
+    generated_id = insert_query("INSERT INTO tournaments (format, title, prize, start_date) VALUES (?, ?, ?, ?)",
+                                (tournament.tour_format, tournament.title,
+                                 tournament.prize, tournament.start_date))
     return Tournament(
         id=generated_id,
         title=tournament.title,
@@ -64,12 +65,10 @@ def get_tournament_participants(tour_id: int) -> list[Player]:
 def manage_tournament(tournament, new_date: date | None, change_participants: UpdateParticipantModel | None):
     response = []
     if new_date:
-        pass
-        # Maybe we will need tournament start_date column in the DB
-        # old_date = tournament.start_date
-        # update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", (new_date, tournament.id))
-        # response.append(Response(status_code=200, content=f'Successfully changed tournament start date from '
-        #                                                   f'{old_date} to {new_date}'))
+        old_date = tournament.start_date
+        update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", (new_date, tournament.id))
+        response.append(Response(status_code=200, content=f'Successfully changed tournament start date from '
+                                                          f'{old_date} to {new_date}'))
     if change_participants:
         new_player = user_service.get_player_profile_by_fullname(change_participants.new_player)
         old_player = user_service.get_player_profile_by_fullname(change_participants.old_player)
@@ -142,17 +141,14 @@ def insert_participants_into_tournament(player_profiles_id: list[int], tournamen
                             VALUES(?,?)''', (tournament_id, player_id))
 
 
-def get_tournament_start_date(tournament):
-    matches = match_service.get_matches_for_tournament(tournament.id)
-    result = matches.sorted(key=lambda x: x.date, reverse=True)
-    first_match_start_date = result[0]
-    return first_match_start_date
-
-
-def separate_tournament_format(tournament):
-    # 'Time Limited: 60 minutes'
-    value = [char for char in tournament.match_format if char.isdigit()]
-    match_format = tournament.match_format[:":"]
+def separate_match_format(match: Match):
+    # 'Time Limited: 60 minutes'  -> 'Time Limited', 60
+    value = [char for char in match.format if char.isdigit()]
     if not value:
         raise BadRequest('Something went wrong')
+    slice_index = match.format.find(':')
+    match_format = match.format[:slice_index].strip()
+    if not match_format:
+        raise BadRequest('Something went wrong')
+    value = int(''.join(value))
     return match_format, value
