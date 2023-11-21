@@ -192,4 +192,4 @@ class PlayerStatistics(Player):
                    matches_won=matches_won,
                    tournaments_played=tournaments_played,
                    tournaments_won=tournaments_won,
-                   ratio=ratio)
+                   ratio=round(ratio,2))
