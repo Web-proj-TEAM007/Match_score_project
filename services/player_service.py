@@ -23,3 +23,36 @@ def player_exists_id(pl_id: int) -> bool:
     return any(
         read_query('''SELECT 1 FROM players_statistics
                    WHERE player_profile_id = ?''', (pl_id,)))
+
+def update_player_stat_matches(player_id: int, win: bool) -> None | BadRequest:
+    # ratio = win / loss - според изискванията. Какво да връщам и да въвеждам в базата, ако играчът няма победи? За сега формулата по-долу.
+    # ratio = win / matches_played - Показва коеф. на успеяваемост, струва ми се по-логично...
+
+    if win:
+        ans =update_query('''UPDATE players_statistics SET matches_won = matches_won + 1, 
+                                                            matches_played = matches_played + 1, 
+                                                            ratio = matches_won / matches_played
+                            WHERE player_profile_id = ?''', (player_id,))
+    else:
+        ans =update_query('''UPDATE players_statistics SET matches_played = matches_played + 1, 
+                                                            ratio = matches_won / matches_played
+                            WHERE player_profile_id = ?''', (player_id,))
+
+
+    if not ans:
+        raise BadRequest('Updating player match stats went wrong.')
+
+def update_player_stat_tourn(player_id: int, t_win: bool) -> None | BadRequest:
+
+    if t_win:
+        ans = update_query('''UPDATE players_statistics 
+                                SET tournaments_won = tournaments_won + 1, 
+                                    tournaments_played = tournaments_played + 1
+                            WHERE player_profile_id = ?''', (player_id,))
+    else:
+        ans = update_query('''UPDATE players_statistics 
+                                SET tournaments_played = tournaments_played + 1
+                            WHERE player_profile_id = ?''', (player_id,))
+    
+    if not ans:
+        raise BadRequest('Updating player tournament stats went wrong.')
