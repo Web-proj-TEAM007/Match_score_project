@@ -57,7 +57,6 @@ def get_tournament_by_id(tournament_id: int = Query(..., description='Enter desi
     if not tournament:
         raise NotFound(detail='No such tournament')
     tournament.matches = match_service.get_matches_for_tournament(tournament.id)
-    tournament.start_date = tournaments_service.get_tournament_start_date(tournament)
     if not tournament.start_date:
         tournament.start_date = 'Not set yet'
     return tournament
