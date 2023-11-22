@@ -141,14 +141,4 @@ def insert_participants_into_tournament(player_profiles_id: list[int], tournamen
                             VALUES(?,?)''', (tournament_id, player_id))
 
 
-def separate_match_format(match: Match):
-    # 'Time Limited: 60 minutes'  -> 'Time Limited', 60
-    value = [char for char in match.format if char.isdigit()]
-    if not value:
-        raise BadRequest('Something went wrong')
-    slice_index = match.format.find(':')
-    match_format = match.format[:slice_index].strip()
-    if not match_format:
-        raise BadRequest('Something went wrong')
-    value = int(''.join(value))
-    return match_format, value
+
