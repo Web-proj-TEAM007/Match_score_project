@@ -63,13 +63,17 @@ def upd_themost_played_opponent(player_id: int) -> None | BadRequest:
                             SET most_played_opp = (WITH matchess AS
                                                         (SELECT matches_id FROM matches_has_players_profiles
                                                         WHERE player_profile_id = ?)
-                                SELECT full_name FROM matches_has_players_profiles mp
-                                JOIN players_profiles pp ON pp.id = mp.player_profile_id
-                                JOIN matchess m ON m.matches_id = mp.matches_id and mp.player_profile_id != ?
-                                GROUP BY player_profile_id
-                                ORDER BY COUNT(mp.player_profile_id) desc, full_name desc
-                                LIMIT 1)
-                                WHERE player_profile_id = ?''', (player_id, player_id, player_id))
+                                    SELECT full_name FROM matches_has_players_profiles mp
+                                    JOIN players_profiles pp ON pp.id = mp.player_profile_id
+                                    JOIN matchess m ON m.matches_id = mp.matches_id and mp.player_profile_id != ?
+                                    GROUP BY player_profile_id
+                                    ORDER BY COUNT(mp.player_profile_id) desc, full_name desc
+                                    LIMIT 1)
+                            WHERE player_profile_id = ?''', (player_id, player_id, player_id))
     
     if not ans:
         raise BadRequest('Updating the most played opponent went wrong.')
+
+def upd_thebest_opponent(player_id: int): pass
+
+def upd_theworst_opponent(player_id: int): pass
