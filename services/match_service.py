@@ -1,5 +1,6 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod, WinnerResponseMode, MatchesResponseMod
+from data.models import Tournament, Player, Match, MatchTournResponseMod, MatchResponseMod, SetMatchScoreMod, \
+    WinnerResponseMode, MatchesResponseMod
 from common.validators import check_date
 from services import user_service, tournaments_service
 from common.validators import check_date, check_score, _MATCH_PHASES, _SORT_BY_VAL
@@ -22,7 +23,7 @@ def create_next_phase(winner_ids: list[int],
 
     if ind < 0:
         raise BadRequest(f'Final is the last phase.')
-    
+
     next_phase = _MATCH_PHASES[ind]
 
     players_names = get_players_names(winner_ids)
@@ -63,7 +64,7 @@ def get_match_by_id(match_id: int):
                             WHERE m.matches_id = ? and m.player_profile_id = pl.id''', (match_id, match_id))
 
     player_one = data[0][2] + ': ' + str(check_score(data[0][-3]))
-    player_two = data[1][2] + ': ' + str(check_score(data[0][-3]))
+    player_two = data[1][2] + ': ' + str(check_score(data[1][-3]))
     datee = data[0][-2]
     tourn_title = data[0][1]
     match_f = data[0][-1]
@@ -135,16 +136,6 @@ def get_participants_ids(participants: list[str]) -> list[int]:
 #     match_status = match_score.match_finished
 #
 #     if not match_status:
-#         if match_format == 'Score Limited':
-#             if pl_1_score > value or pl_2_score > value:
-#                 # Тука мача свършва ако са надминате ограниченията за резултата
-#                 match_score.match_finished = True
-#         #       Имплемнтация за statistic
-#         elif match_format == 'Time Limited':
-#             if match.date + value > datetime.now():  # Shte go razgledam kak da se formatira i da gi sumira tochno
-#                 #       Тука мача свършва ако са надминате ограниченията за резултата
-#                 match_score.match_finished = True
-#         #       ako i dvete proverki minavat togava da vlizame v update_query
 #         update_query('''UPDATE matches_has_players_profiles
 #                         SET score = ?
 #                         WHERE matches_id = ? and player_profile_id = ?''', (pl_1_score, match_id, pl_1_id))
@@ -152,14 +143,12 @@ def get_participants_ids(participants: list[str]) -> list[int]:
 #                         SET score = ?
 #                         WHERE matches_id = ? and player_profile_id = ?''', (pl_2_score, match_id, pl_2_id))
 #     elif pl_1_score > pl_2_score:
-#
 #         update_query('''UPDATE matches_has_players_profiles
 #                         SET score = ?, win = 1
 #                         WHERE matches_id = ? and player_profile_id = ?''', (pl_1_score, match_id, pl_1_id))
 #         update_query('''UPDATE matches_has_players_profiles
 #                         SET score = ?, win = 0
 #                         WHERE matches_id = ? and player_profile_id = ?''', (pl_2_score, match_id, pl_2_id))
-#
 #         if is_final:
 #             namee, countryy, clubb = list(get_player_name_club_country(pl_1_id)[0])
 #             tourn_name = get_tournament_title(match_score.tourn_id)[0][0]
@@ -167,16 +156,16 @@ def get_participants_ids(participants: list[str]) -> list[int]:
 #                                       club=clubb,
 #                                       country=countryy,
 #                                       tournament_won=tourn_name)
-#
+
 #     elif pl_1_score < pl_2_score:
-#
+
 #         update_query('''UPDATE matches_has_players_profiles
 #                         SET score = ?, win = 0
 #                         WHERE matches_id = ? and player_profile_id = ?''', (pl_1_score, match_id, pl_1_id))
 #         update_query('''UPDATE matches_has_players_profiles
 #                         SET score = ?, win = 1
 #                         WHERE matches_id = ? and player_profile_id = ?''', (pl_2_score, match_id, pl_2_id))
-#
+
 #         if is_final:
 #             namee, countryy, clubb = list(get_player_name_club_country(pl_2_id)[0])
 #             tourn_name = get_tournament_title(match_score.tourn_id)[0][0]
@@ -196,34 +185,60 @@ def change_match_score(match_id: int, match_score: SetMatchScoreMod) -> Response
     pl_2_score = match_score.pl_2_score
     tournament = tournaments_service.get_tournament_by_id(match_score.tourn_id)
     if not tournament:
-        raise BadRequest(content='Invalid tournament ID')
+        raise BadRequest(detail='Invalid tournament ID')
     match = get_match_by_id_v2(match_id)
     if not match:
-        raise BadRequest(content='Invalid match ID')
-    match_format, value = tournaments_service.separate_match_format(match)
-    is_final = check_if_match_final(match_id)
+        raise BadRequest(detail='Invalid match ID')
+    match_format, value = separate_match_format(match)
+    if is_match_already_has_winner(match_id):
+        raise BadRequest(detail='The match already has a winner')
     match_status = match_score.match_finished
     player1_current_score, player2_current_score = get_players_current_score(match_id, pl_1_id, pl_2_id)
-    if match_format == 'Score Limited' and (player1_current_score > value or player2_current_score > value):
-        return Response(status_code=200, content=f'Score limit reached: {value}')
+    player1_last_result = calculate_final_result(player1_current_score, pl_1_score, value)
+    player2_last_result = calculate_final_result(player2_current_score, pl_2_score, value)
+    if match_format == 'Score Limited' and (player1_last_result >= value or player2_last_result >= value):
+        result = update_winner_info(tournament.id, match_id, pl_1_id, player1_last_result, pl_2_id, player2_last_result)
+        return result if result else Response(status_code=200, content=f'Score limit reached: {value}')
         # Need additional return, most likely the match final result
+    # TODO: for now it does not assure time limit.
     elif match_format == 'Time Limited' and match.date + value < datetime.now():
-        return Response(status_code=200, content=f'Time limit reached: {value}')
+        result = update_winner_info(tournament.id, match_id, pl_1_id, player1_last_result, pl_2_id, player2_last_result)
+        return result if result else Response(status_code=200, content=f'Time limit reached: {value}')
         # Need additional return, most likely the match final result
     if not match_status:
         update_player_score(match_id, pl_1_id, pl_1_score)
         update_player_score(match_id, pl_2_id, pl_2_score)
     elif match_status:
-        if pl_1_score > pl_2_score:
-            update_winner_info(match_id, pl_1_id, pl_1_score, pl_2_id, pl_2_score)
-            if is_final:
-                return create_winner_response(pl_1_id, match_score.tourn_id)
+        result = update_winner_info(tournament.id, match_id, pl_1_id, player1_last_result, pl_2_id, player2_last_result)
+        return result if result else Response(status_code=200, content='Score changed successfully')
+    # TODO: Proper return with response models when there is a winner, not only when it's final
 
-    elif pl_1_score < pl_2_score:
-        update_winner_info(match_id, pl_2_id, pl_2_score, pl_1_id, pl_1_score)
+
+def update_winner_info(tournament_id: int, match_id: int, player1_id: int,
+                       player1_score: int, player2_id: int, player2_score: int) -> None | WinnerResponseMode | Response:
+    is_final = check_if_match_final(match_id)
+    if player1_score > player2_score:
+        update_query('''UPDATE matches_has_players_profiles
+                        SET score = ?, win = 1
+                        WHERE matches_id = ? and player_profile_id = ?''', (player1_score, match_id, player1_id))
+        update_query('''UPDATE matches_has_players_profiles
+                        SET score = ?, win = 0
+                        WHERE matches_id = ? and player_profile_id = ?''', (player2_score, match_id, player2_id))
         if is_final:
-            return create_winner_response(pl_2_id, match_score.tourn_id)
-    return Response(status_code=200, content='Score changed successfully')
+            return create_winner_response(player1_id, tournament_id)
+    elif player2_score > player1_score:
+        update_query('''UPDATE matches_has_players_profiles
+                                SET score = ?, win = 1
+                                WHERE matches_id = ? and player_profile_id = ?''',
+                     (player2_score, match_id, player2_id))
+        update_query('''UPDATE matches_has_players_profiles
+                                SET score = ?, win = 0
+                                WHERE matches_id = ? and player_profile_id = ?''',
+                     (player1_score, match_id, player1_id))
+        if is_final:
+            return create_winner_response(player2_id, tournament_id)
+    elif player2_score == player1_score:
+        return Response(status_code=200, content='Match is draw')
 
 
 def get_players_current_score(match_id: int, player1_id: int, player2_id: int) -> tuple[int, int]:
@@ -242,15 +257,6 @@ def update_player_score(match_id: int, player_id: int, score: int) -> None:
                     WHERE matches_id = ? and player_profile_id = ?''', (score, match_id, player_id))
 
 
-def update_winner_info(match_id: int, winner_id: int, winner_score: int, loser_id: int, loser_score: int) -> None:
-    update_query('''UPDATE matches_has_players_profiles
-                    SET score = ?, win = 1
-                    WHERE matches_id = ? and player_profile_id = ?''', (winner_score, match_id, winner_id))
-    update_query('''UPDATE matches_has_players_profiles
-                    SET score = ?, win = 0
-                    WHERE matches_id = ? and player_profile_id = ?''', (loser_score, match_id, loser_id))
-
-
 def create_winner_response(player_id: int, tournament_id: int) -> WinnerResponseMode:
     name, country, club = list(get_player_name_club_country(player_id)[0])
     tournament_name = get_tournament_title(tournament_id)[0][0]
@@ -258,7 +264,6 @@ def create_winner_response(player_id: int, tournament_id: int) -> WinnerResponse
 
 
 def get_matches_for_tournament(tournament_id: int):
-    # ---- To Shahin: Will need this function to properly return tournaments
     data = read_query('''SELECT * FROM matches WHERE tournament_id = ?''', (tournament_id,))
 
     return (Match.from_query_result(*row) for row in data)
@@ -294,10 +299,11 @@ def get_winners_ids(match_ids: list[int]) -> list[str]:
                                 WHERE mpp.matches_id = ? and mpp.win = 1''', (id[0],))
         if not winner_id:
             raise BadRequest(f'Matches did not finished yet.')
-        
+
         winners.append(winner_id[0][0])
 
     return winners[::-1]
+
 
 def find_next_phase(current_fase: str) -> int:
     for index, fase in enumerate(_MATCH_PHASES):
@@ -340,7 +346,6 @@ def update_participants_for_matches(tournament, old_player, new_player):
 
 
 def check_if_match_final(match_id: int) -> bool:
-
     return any(
         read_query(
             '''SELECT 1 FROM matches
@@ -348,26 +353,23 @@ def check_if_match_final(match_id: int) -> bool:
 
 
 def get_player_name_club_country(player_id: int):
-
     return read_query(
         '''SELECT full_name, country, club FROM players_profiles
         WHERE id = ?''', (player_id,))
 
 
 def get_tournament_title(tourn_id: int):
-
     return read_query(
         '''SELECT title FROM tournaments
         WHERE id = ?''', (tourn_id,))
 
 
 def get_all_matches(sort: str | None = None, sort_by: str | None = None) -> list[MatchesResponseMod]:
-
     if sort_by:
 
         if sort_by not in _SORT_BY_VAL:
             raise BadRequest(f'Cannot sort by: {sort_by}')
-        
+
         sort_by = 'm.' + sort_by
         data = read_query(f'''SELECT m.id, full_name, mp.score, m.date, t.title FROM matches m
                                 JOIN matches_has_players_profiles mp ON m.id = mp.matches_id
@@ -379,29 +381,27 @@ def get_all_matches(sort: str | None = None, sort_by: str | None = None) -> list
                                     JOIN matches_has_players_profiles mp ON m.id = mp.matches_id
                                     JOIN tournaments t ON m.tournament_id = t.id
                                     JOIN players_profiles pp ON pp.id = mp.player_profile_id''')
-    
+
     return packaging_for_all_matches(data)
 
 
 def set_match_date(match_id: int, m_date: datetime):
-    
     ans = update_query('''UPDATE matches SET date = ?
-                 WHERE id = ?''',(m_date, match_id))
-    
+                 WHERE id = ?''', (m_date, match_id))
+
     if not ans:
         raise BadRequest(f'Something went wrong.')
-    
+
     return Response(status_code=200, content=f'Match #{match_id} date set to: {m_date}')
 
 
-def paginating_matches(page: int, 
-                       page_size: int | None = 2, 
-                       sort: str | None = None, 
+def paginating_matches(page: int,
+                       page_size: int | None = 2,
+                       sort: str | None = None,
                        sort_by: str | None = None):
-
     if page <= 0:
         return BadRequest('Page must be equal to or higher than 1.')
-    page = (int(page)-1) * int(page_size)
+    page = (int(page) - 1) * int(page_size)
 
     if sort_by:
 
@@ -425,12 +425,11 @@ def paginating_matches(page: int,
                                 JOIN matches_has_players_profiles mp ON m.id = mp.matches_id
                                 JOIN tournaments t ON m.tournament_id = t.id
                                 JOIN players_profiles pp ON pp.id = mp.player_profile_id''')
-    
+
     return packaging_for_all_matches(data)
 
 
 def packaging_for_all_matches(data: list) -> list[MatchesResponseMod]:
-
     all_matches = []
     index = 0
     while index < (len(data) - 1):
@@ -452,10 +451,35 @@ def packaging_for_all_matches(data: list) -> list[MatchesResponseMod]:
             score=names_and_scores,
             match_date=match_date,
             tournament_title=tourn_title)
-        
-        
+
         all_matches.append(match_resp)
 
         index += 2
-    
+
     return all_matches
+
+
+def calculate_final_result(player_current_score, pl_last_score, value):
+    player_total_score = player_current_score + pl_last_score
+    if player_total_score > value:
+        return value
+    return player_total_score
+
+
+def is_match_already_has_winner(match_id: int) -> bool:
+    result = read_query('SELECT COUNT(*) as winner_count FROM matches_has_players_profiles '
+                        'WHERE matches_id = ? AND win = 1', (match_id,))
+    return result[0][0] > 0
+
+
+def separate_match_format(match: Match):
+    # 'Time Limited: 60 minutes'  -> 'Time Limited', 60
+    value = [char for char in match.format if char.isdigit()]
+    if not value:
+        raise BadRequest('Something went wrong')
+    slice_index = match.format.find(':')
+    match_format = match.format[:slice_index].strip()
+    if not match_format:
+        raise BadRequest('Something went wrong')
+    value = int(''.join(value))
+    return match_format, value
