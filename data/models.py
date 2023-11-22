@@ -178,11 +178,15 @@ class PlayerStatistics(Player):
     tournaments_played: int
     tournaments_won: int
     ratio: float
+    most_played_against: str
+    best_opponent: str
+    worst_opponent: str
 
     @classmethod
     def from_query_result(cls, id, full_name, country, 
                           sport_club, matches_played, matches_won, 
-                          tournaments_played, tournaments_won, ratio):
+                          tournaments_played, tournaments_won, ratio, 
+                          most_played_against, best_opponent, worst_opponent):
         return cls(id=id,
                    full_name=full_name,
                    country=country,
@@ -191,4 +195,7 @@ class PlayerStatistics(Player):
                    matches_won=matches_won,
                    tournaments_played=tournaments_played,
                    tournaments_won=tournaments_won,
-                   ratio=round(ratio,2))
+                   ratio=round(ratio,2),
+                   most_played_against=most_played_against,
+                   best_opponent=best_opponent,
+                   worst_opponent=worst_opponent)
