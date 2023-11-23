@@ -30,7 +30,6 @@ def get_all_matches(sort: str | None = 'asc',
 
     if not matches:
         return Response(status_code=200, content='No matches')
-    
     return matches
 
 @match_router.get('/{match_id}')
@@ -38,7 +37,7 @@ def get_match_by_id(match_id: int):
 
     ans = match_service.match_exists(match_id)
     if not ans:
-        return NotFound(f'Match #{match_id} not found.')
+        raise NotFound(f'Match #{match_id} not found.')
 
     return match_service.get_match_by_id(match_id)
 
@@ -46,9 +45,9 @@ def get_match_by_id(match_id: int):
 @match_router.get('/tournaments/{tourn_id}')
 def get_matches_by_tournament(tourn_id: int):
 
-    ans = tournaments_service.tourn_exists_by_id(tourn_id)
+    ans = tournaments_service.tournament_exists_by_id(tourn_id)
     if not ans:
-        return NotFound(f'Tournament #{tourn_id} not found.')
+        raise NotFound(f'Tournament #{tourn_id} not found.')
 
     return match_service.get_matches_for_tournament(tourn_id)
 

@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel
+from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, Match
 import random
 from common.validators import tournament_format_validator
 from common.exceptions import BadRequest
@@ -10,7 +10,7 @@ from datetime import date
 
 
 def get_all_tournaments(title, tour_format):
-    query = "SELECT id, title, format, prize FROM tournaments"
+    query = "SELECT id, title, format, prize, start_date FROM tournaments"
     params = []
     where_clauses = []
     if title:
@@ -27,7 +27,7 @@ def get_all_tournaments(title, tour_format):
 
 
 def get_tournament_by_id(tour_id: int):
-    data = read_query('SELECT id, title, format, prize FROM tournaments WHERE id = ?', (tour_id,))
+    data = read_query('SELECT id, title, format, prize, start_date FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
     tournament.participants = get_tournament_participants(tournament.id)
     # if tournament.scheme_format
@@ -36,8 +36,9 @@ def get_tournament_by_id(tour_id: int):
 
 
 def create_tournament(tournament: TournamentCreateModel) -> Tournament:
-    generated_id = insert_query("INSERT INTO tournaments (format, title, prize) VALUES (?, ?, ?)",
-                                (tournament.tour_format, tournament.title, tournament.prize))
+    generated_id = insert_query("INSERT INTO tournaments (format, title, prize, start_date) VALUES (?, ?, ?, ?)",
+                                (tournament.tour_format, tournament.title,
+                                 tournament.prize, tournament.start_date))
     return Tournament(
         id=generated_id,
         title=tournament.title,
@@ -64,12 +65,10 @@ def get_tournament_participants(tour_id: int) -> list[Player]:
 def manage_tournament(tournament, new_date: date | None, change_participants: UpdateParticipantModel | None):
     response = []
     if new_date:
-        pass
-        # Maybe we will need tournament start_date column in the DB
-        # old_date = tournament.start_date
-        # update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", (new_date, tournament.id))
-        # response.append(Response(status_code=200, content=f'Successfully changed tournament start date from '
-        #                                                   f'{old_date} to {new_date}'))
+        old_date = tournament.start_date
+        update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", (new_date, tournament.id))
+        response.append(Response(status_code=200, content=f'Successfully changed tournament start date from '
+                                                          f'{old_date} to {new_date}'))
     if change_participants:
         new_player = user_service.get_player_profile_by_fullname(change_participants.new_player)
         old_player = user_service.get_player_profile_by_fullname(change_participants.old_player)
@@ -84,6 +83,7 @@ def manage_tournament(tournament, new_date: date | None, change_participants: Up
                                                               f'{old_player.full_name} with {new_player.full_name}, '
                                                               f'no matches are updated'))
     return response
+
 
 def generate_knockout_schema(players):
     match_players = []
@@ -123,21 +123,22 @@ def get_scheme_format(players_count):
         raise BadRequest('Players number must be 2,4,8 or 16.')
     elif players_count > 16:
         raise BadRequest('Too many players, max is 16.')
-    else:
-        return 'Poveche nedavam'
 
 
 def tournament_exists(tour_title: str) -> bool:
     return any(read_query('''SELECT 1 FROM tournaments WHERE title = ?''', (tour_title,)))
 
 
-def tourn_exists_by_id(tourn_id: int) -> bool:
+def tournament_exists_by_id(tournament_id: int) -> bool:
     return any(
         read_query(
-            '''SELECT 1 FROM tournaments WHERE id = ?''', (tourn_id,)))
+            '''SELECT 1 FROM tournaments WHERE id = ?''', (tournament_id,)))
 
 
 def insert_participants_into_tournament(player_profiles_id: list[int], tournament_id):
     for player_id in player_profiles_id:
         insert_query('''INSERT INTO tournaments_has_players_profiles(tournament_id, player_profile_id)
                             VALUES(?,?)''', (tournament_id, player_id))
+
+
+

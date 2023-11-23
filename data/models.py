@@ -110,11 +110,12 @@ class Tournament(TournamentBase):
     start_date: Optional[date] = None
 
     @classmethod
-    def from_query_result(cls, id, title, tour_format, prize):
+    def from_query_result(cls, id, title, tour_format, prize, start_date):
         return cls(id=id,
                    title=title,
                    tour_format=tour_format,
                    prize=prize,
+                   start_date=start_date
                    )
 
 

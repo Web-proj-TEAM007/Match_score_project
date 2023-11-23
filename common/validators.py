@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from services import user_service
 from common.exceptions import BadRequest, NotFound
 
@@ -21,7 +21,7 @@ def match_format_validator(match_format: str):
 
 
 def check_date(date: str | datetime):
-    if date != datetime:
+    if not isinstance(date, datetime):
         return 'not set yet'
     return date
 
@@ -45,3 +45,9 @@ def check_score(score: int | None):
         return 0
     else:
         return score
+
+
+def time_limit_validator(match_date, limit):
+    # match_date = 2023-11-30 10:00:00 , limit = 60 (minutes)
+    time_limit = match_date + timedelta(minutes=limit)
+    return time_limit < datetime.now()

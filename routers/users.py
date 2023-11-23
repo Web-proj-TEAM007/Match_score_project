@@ -28,7 +28,7 @@ def create_profile(data: Player, token: str = Depends(JWTBearer())):
 
     user_service.create_player_profile(data.full_name, data.country, data.sport_club)
 
-    return Response("Profile created successfuly")
+    return Response("Profile created successfully")
 
 
 @users_router.post('/promote')
