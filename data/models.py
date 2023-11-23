@@ -175,28 +175,26 @@ class SetMatchDate(BaseModel):
 
 class PlayerStatistics(Player):
     matches_played: int
-    matches_won: int
     tournaments_played: int
     tournaments_won: int
-    ratio: float
-    most_played_against: str
-    best_opponent: str
-    worst_opponent: str
+    wl_ratio: str
+    most_played_against: str | None
+    best_opponent: str | None
+    worst_opponent: str | None
 
     @classmethod
     def from_query_result(cls, id, full_name, country, 
-                          sport_club, matches_played, matches_won, 
-                          tournaments_played, tournaments_won, ratio, 
+                          sport_club, matches_played, 
+                          tournaments_played, tournaments_won, wl_ratio, 
                           most_played_against, best_opponent, worst_opponent):
         return cls(id=id,
                    full_name=full_name,
                    country=country,
                    sport_club=sport_club,
                    matches_played=matches_played,
-                   matches_won=matches_won,
                    tournaments_played=tournaments_played,
                    tournaments_won=tournaments_won,
-                   ratio=round(ratio,2),
+                   wl_ratio=wl_ratio,
                    most_played_against=most_played_against,
                    best_opponent=best_opponent,
                    worst_opponent=worst_opponent)

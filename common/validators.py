@@ -51,3 +51,9 @@ def time_limit_validator(match_date, limit):
     # match_date = 2023-11-30 10:00:00 , limit = 60 (minutes)
     time_limit = match_date + timedelta(minutes=limit)
     return time_limit < datetime.now()
+
+def form_ratio(matches_won: int, matches_lost: int) -> str:
+    #should return '3/6'
+
+    ratio = str(matches_won) + '/' + str(matches_lost)
+    return ratio
