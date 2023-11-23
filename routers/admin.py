@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Response
 from services import admin_service
 from authentication.jwt_bearer import JWTBearer
 from authentication.auth import get_user_from_token
-from data.models import Link_profile
+from data.models import Link_profile, Player_Director_ApproveMailer
 
 
 admin_router = APIRouter(prefix='/admin')
@@ -35,7 +35,21 @@ def link_profile(data: Link_profile,
     return admin_service.link(data.user_id, data.player_id, user.user_role)
 
 
+@admin_router.post('/send_notification_player')
+def send_notification_player(data: Player_Director_ApproveMailer, token: str = Depends(JWTBearer())):
+
+    user = get_user_from_token(token)
     
+    return admin_service.send_email_player(data.email, data.approval, user.user_role)
+
+
+@admin_router.post('/send_notification_director')
+def send_notification_director(data: Player_Director_ApproveMailer, token: str = Depends(JWTBearer())):
+
+    user = get_user_from_token(token)
+    
+    return admin_service.send_email_director(data.email, data.approval, user.user_role)
+
 
 
 
