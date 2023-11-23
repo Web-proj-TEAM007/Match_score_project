@@ -193,3 +193,7 @@ class PlayerStatistics(Player):
                    tournaments_played=tournaments_played,
                    tournaments_won=tournaments_won,
                    ratio=round(ratio,2))
+    
+class Player_Director_ApproveMailer(BaseModel):
+    email: str
+    approval: int
