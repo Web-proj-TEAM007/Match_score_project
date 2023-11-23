@@ -3,7 +3,7 @@ from common.exceptions import BadRequest
 from data.models import RequestsResponseModel
 from fastapi import Response
 from mailjet_rest import Client
-
+import os
 
 def requests(user_role, user_id):
     
@@ -60,8 +60,8 @@ def send_email_player(user_email, approval, user_role):
 	This call sends a message to one recipient.
 	"""
 
-    api_key = '966d0543c33ecedcabbe1e8a98af1e52'
-    api_secret = 'bdb1d8fec08358028ce714d9cacdd259'
+    api_key = os.getenv('MAIL_API')
+    api_secret = os.getenv('MAIL_API_SECRET')
     mailjet = Client(auth=(api_key, api_secret), version='v3.1')
     data = {
 	'Messages': [
