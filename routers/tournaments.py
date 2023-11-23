@@ -37,10 +37,12 @@ def create_tournament(tournament: TournamentCreateModel, token: str = Depends(JW
         return Response(f'{tournament.title} already exists')
     # ---------- check if each player is already existing, if not, create one and link it to profile --------
     players = tournament.participants.copy()
-    player_profiles_id = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
-                          players if not user_service.player_profile_exists(name)]
+    players_profiles_ids = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
+                            players if not user_service.player_profile_exists(name)]
+    if not players_profiles_ids:
+        players_profiles_ids = [user_service.get_player_profile_by_fullname(name).id for name in players]
     tournament = tournaments_service.create_tournament(tournament)
-    _ = tournaments_service.insert_participants_into_tournament(player_profiles_id, tournament.id)
+    _ = tournaments_service.insert_participants_into_tournament(players_profiles_ids, tournament.id)
     if tournament_format_validator(tournament.tour_format) == "Knockout":
         player_schema = tournaments_service.generate_knockout_schema(players)
         tournament.scheme_format = tournaments_service.get_scheme_format(len(tournament.participants))
