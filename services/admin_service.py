@@ -105,8 +105,8 @@ def send_email_director(user_email, approval, user_role):
     This call sends a message to one recipient.
     """
 
-    api_key = '966d0543c33ecedcabbe1e8a98af1e52'
-    api_secret = 'bdb1d8fec08358028ce714d9cacdd259'
+    api_key = os.getenv('MAIL_API')
+    api_secret = os.getenv('MAIL_API_SECRET')
     mailjet = Client(auth=(api_key, api_secret), version='v3.1')
     data = {
 	'Messages': [
@@ -129,6 +129,76 @@ def send_email_director(user_email, approval, user_role):
     result = mailjet.send.create(data=data)
     print (result.status_code)
     print (result.json())
+
+def tournament_entry_notification(user_email, user_role):
+
+    if user_role != 'admin':
+        return BadRequest('Access not allowed!')
+
+    """
+    This call sends a message to one recipient.
+    """
+
+    api_key = os.getenv('MAIL_API')
+    api_secret = os.getenv('MAIL_API_SECRET')
+    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+    data = {
+	'Messages': [
+					{
+							"From": {
+									"Email": "velislavangelov19@gmail.com",
+									"Name": "Admin"
+							},
+							"To": [
+									{
+											"Email": f"{user_email}"
+									}
+							],
+							"Subject": "Tournament entry notification",
+							"TextPart": "Welcome to the tournament! Good luck!",
+							"HTMLPart": "<h3>Welcome to the tournament!</h3><br/> Good luck!"
+					}
+			]
+	}
+    result = mailjet.send.create(data=data)
+    print (result.status_code)
+    print (result.json())
+
+def match_entry_notification(user_email, user_role):
+
+    if user_role != 'admin':
+        return BadRequest('Access not allowed!')
+
+    """
+    This call sends a message to one recipient.
+    """
+
+    api_key = os.getenv('MAIL_API')
+    api_secret = os.getenv('MAIL_API_SECRET')
+    mailjet = Client(auth=(api_key, api_secret), version='v3.1')
+    data = {
+	'Messages': [
+					{
+							"From": {
+									"Email": "velislavangelov19@gmail.com",
+									"Name": "Admin"
+							},
+							"To": [
+									{
+											"Email": f"{user_email}"
+									}
+							],
+							"Subject": "Match entry notification",
+							"TextPart": "You have been added to a match! Good luck!",
+							"HTMLPart": "<h3>You have been added to a match!</h3><br/> Good luck!"
+					}
+			]
+	}
+    result = mailjet.send.create(data=data)
+    print (result.status_code)
+    print (result.json())
+
+
 
 
 
