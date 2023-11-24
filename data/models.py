@@ -197,3 +197,6 @@ class PlayerStatistics(Player):
 class Player_Director_ApproveMailer(BaseModel):
     email: str
     approval: int
+
+class Notify_player(BaseModel):
+    email: str
