@@ -2,7 +2,7 @@ from data.database import read_query, update_query, insert_query
 from data.models import PlayerStatistics
 from common.validators import check_date
 from services import user_service, tournaments_service
-from common.validators import check_date, check_score, _MATCH_PHASES, _SORT_BY_VAL, form_ratio
+from common.validators import check_date, check_score, _MATCH_PHASES, _SORT_BY_VAL
 from datetime import datetime, date
 from common.exceptions import BadRequest
 from fastapi import Response
@@ -10,27 +10,13 @@ from fastapi import Response
 
 def get_player_by_id(pl_id: int):
 
-    data = read_query('''SELECT pp.id, pp.full_name, pp.country, pp.club, ps.matches_won, ps.matches_lost,
-                                    ps.matches_played, ps.tournaments_played, ps.tournaments_won, 
-                                    ps.most_played_opp, ps.best_opp, ps.worst_opp
+    data = read_query('''SELECT pp.id, pp.full_name, pp.country, pp.club, 
+                                    ps.matches_played, ps.matches_won, ps.tournaments_played, ps.tournaments_won, ps.ratio 
                         FROM players_statistics ps
                             JOIN players_profiles pp ON pp.id = ps.player_profile_id
                             WHERE pp.id = ?''', (pl_id,))
-
-    ratio = form_ratio(data[0][4], data[0][5])
-    data[0] = list(data[0])
-    data[0].pop(4)
-    data[0].pop(4)
-
-    return next((PlayerStatistics.from_query_result(id=id,full_name=full_name,country=country,sport_club=sport_club,
-                                                    matches_played=matches_played,
-                                                    tournaments_played=tournaments_played,
-                                                    tournaments_won=tournaments_won,wl_ratio=ratio,
-                                                    most_played_against=most_played_opp, 
-                                                    best_opponent=best_opp, worst_opponent=worst_opp) 
-                                                    for id,full_name,country,sport_club,
-                                                            matches_played,tournaments_played,tournaments_won,
-                                                            most_played_opp,best_opp,worst_opp in data), None)
+    
+    return next((PlayerStatistics.from_query_result(*row) for row in data), None)
 
 def player_exists_id(pl_id: int) -> bool:
 
@@ -39,25 +25,32 @@ def player_exists_id(pl_id: int) -> bool:
                    WHERE player_profile_id = ?''', (pl_id,)))
 
 def update_player_stat_matches(player_id: int, win: bool) -> None | BadRequest:
+    # ratio = win / loss - според изискванията. Какво да връщам и да въвеждам в базата, ако играчът няма победи? За сега формулата по-долу.
+    # ratio = win / matches_played - Показва коеф. на успеяваемост, струва ми се по-логично...
 
     if win:
         ans =update_query('''UPDATE players_statistics SET matches_won = matches_won + 1, 
-                                                            matches_played = matches_played + 1                            
+                                                            matches_played = matches_played + 1, 
+                                                            ratio = matches_won / matches_played
                             WHERE player_profile_id = ?''', (player_id,))
     else:
-
-        ans =update_query(f'''UPDATE players_statistics SET matches_played = matches_played + 1, 
-                                                            matches_lost = matches_lost + 1
+        ans =update_query('''UPDATE players_statistics SET matches_played = matches_played + 1, 
+                                                            ratio = matches_won / matches_played
                             WHERE player_profile_id = ?''', (player_id,))
 
 
     if not ans:
         raise BadRequest('Updating player match stats went wrong.')
 
-def update_player_tournament_won(player_id: int) -> None | BadRequest:
+def update_player_stat_tourn(player_id: int, t_win: bool) -> None | BadRequest:
 
-    ans = update_query('''UPDATE players_statistics 
-                                SET tournaments_won = tournaments_won + 1, 
+    if t_win:
+        ans = update_query('''UPDATE players_statistics 
+                                SET tournaments_won = tournaments_won + 1 
+                            WHERE player_profile_id = ?''', (player_id,))
+    else:
+        ans = update_query('''UPDATE players_statistics 
+                                SET tournaments_played = tournaments_played + 1
                             WHERE player_profile_id = ?''', (player_id,))
     
     if not ans:
