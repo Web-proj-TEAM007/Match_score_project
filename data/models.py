@@ -108,14 +108,16 @@ class Tournament(TournamentBase):
     scheme_format: str | None = None
     matches: Optional[Match] | None = None
     start_date: Optional[date] = None
+    winner: str | None = None
 
     @classmethod
-    def from_query_result(cls, id, title, tour_format, prize, start_date):
+    def from_query_result(cls, id, title, tour_format, prize, start_date, winner):
         return cls(id=id,
                    title=title,
                    tour_format=tour_format,
                    prize=prize,
-                   start_date=start_date
+                   start_date=start_date,
+                   winner=winner
                    )
 
 
