@@ -26,10 +26,10 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`tournaments` (
   `title` VARCHAR(45) NOT NULL,
   `prize` INT(11) NULL DEFAULT NULL,
   `start_date` DATETIME NOT NULL,
+  `winner` VARCHAR(45) NULL DEFAULT 'Awaiting winner',
   PRIMARY KEY (`id`),
   UNIQUE INDEX `title_UNIQUE` (`title` ASC) VISIBLE)
 ENGINE = InnoDB
-AUTO_INCREMENT = 3
 DEFAULT CHARACTER SET = latin1;
 
 
@@ -50,7 +50,6 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`matches` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
-AUTO_INCREMENT = 9
 DEFAULT CHARACTER SET = latin1;
 
 
@@ -64,7 +63,6 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_profiles` (
   `club` TINYTEXT NULL DEFAULT NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB
-AUTO_INCREMENT = 14
 DEFAULT CHARACTER SET = latin1;
 
 
@@ -117,7 +115,6 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_statistics` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
-AUTO_INCREMENT = 9
 DEFAULT CHARACTER SET = latin1;
 
 
@@ -140,7 +137,6 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`users` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
-AUTO_INCREMENT = 10
 DEFAULT CHARACTER SET = latin1;
 
 
@@ -166,7 +162,6 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`requests` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
-AUTO_INCREMENT = 6
 DEFAULT CHARACTER SET = latin1;
 
 
