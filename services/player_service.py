@@ -54,16 +54,10 @@ def update_player_stat_matches(player_id: int, win: bool) -> None | BadRequest:
     if not ans:
         raise BadRequest('Updating player match stats went wrong.')
 
-def update_player_stat_tourn(player_id: int, t_win: bool) -> None | BadRequest:
+def update_player_tournament_won(player_id: int) -> None | BadRequest:
 
-    if t_win:
-        ans = update_query('''UPDATE players_statistics 
+    ans = update_query('''UPDATE players_statistics 
                                 SET tournaments_won = tournaments_won + 1, 
-                                    tournaments_played = tournaments_played + 1
-                            WHERE player_profile_id = ?''', (player_id,))
-    else:
-        ans = update_query('''UPDATE players_statistics 
-                                SET tournaments_played = tournaments_played + 1
                             WHERE player_profile_id = ?''', (player_id,))
     
     if not ans:
