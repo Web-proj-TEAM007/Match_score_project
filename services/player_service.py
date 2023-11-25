@@ -42,17 +42,16 @@ def update_player_stat_matches(player_id: int, win: bool) -> None | BadRequest:
 
     if win:
         ans =update_query('''UPDATE players_statistics SET matches_won = matches_won + 1, 
-                                                            matches_played = matches_played + 1                            
+                                                            matches_played = matches_played + 1, 
                             WHERE player_profile_id = ?''', (player_id,))
     else:
-
-        ans =update_query(f'''UPDATE players_statistics SET matches_played = matches_played + 1, 
+        ans =update_query('''UPDATE players_statistics SET matches_played = matches_played + 1, 
                                                             matches_lost = matches_lost + 1
                             WHERE player_profile_id = ?''', (player_id,))
 
-
     if not ans:
         raise BadRequest('Updating player match stats went wrong.')
+
 
 def update_player_stat_tourn(player_id: int, t_win: bool) -> None | BadRequest:
 
