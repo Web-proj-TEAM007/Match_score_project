@@ -16,7 +16,7 @@ def get_player_by_id(pl_id: int):
                         FROM players_statistics ps
                             JOIN players_profiles pp ON pp.id = ps.player_profile_id
                             WHERE pp.id = ?''', (pl_id,))
-
+    
     ratio = form_ratio(data[0][4], data[0][5])
     data[0] = list(data[0])
     data[0].pop(4)
@@ -39,6 +39,8 @@ def player_exists_id(pl_id: int) -> bool:
                    WHERE player_profile_id = ?''', (pl_id,)))
 
 def update_player_stat_matches(player_id: int, win: bool) -> None | BadRequest:
+    # ratio = win / loss - според изискванията. Какво да връщам и да въвеждам в базата, ако играчът няма победи? За сега формулата по-долу.
+    # ratio = win / matches_played - Показва коеф. на успеяваемост, струва ми се по-логично...
 
     if win:
         ans =update_query('''UPDATE players_statistics SET matches_won = matches_won + 1, 
@@ -57,8 +59,7 @@ def update_player_stat_tourn(player_id: int, t_win: bool) -> None | BadRequest:
 
     if t_win:
         ans = update_query('''UPDATE players_statistics 
-                                SET tournaments_won = tournaments_won + 1, 
-                                    tournaments_played = tournaments_played + 1
+                                SET tournaments_won = tournaments_won + 1 
                             WHERE player_profile_id = ?''', (player_id,))
     else:
         ans = update_query('''UPDATE players_statistics 

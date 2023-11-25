@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`tournaments` (
   `title` VARCHAR(45) NOT NULL,
   `prize` INT(11) NULL DEFAULT NULL,
   `start_date` DATETIME NOT NULL,
+  `winner` VARCHAR(45) NULL DEFAULT 'Awaiting winner',
   PRIMARY KEY (`id`),
   UNIQUE INDEX `title_UNIQUE` (`title` ASC) VISIBLE)
 ENGINE = InnoDB
@@ -60,7 +61,6 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_profiles` (
   `full_name` TINYTEXT NOT NULL,
   `country` VARCHAR(45) NULL DEFAULT NULL,
   `club` TINYTEXT NULL DEFAULT NULL,
-  `user_id` INT(11) NULL DEFAULT NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB
 DEFAULT CHARACTER SET = latin1;
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`matches_has_players_profiles` (
   `player_profile_id` INT(11) NOT NULL,
   `score` INT(11) NOT NULL,
   `win` TINYINT(4) NULL DEFAULT NULL,
-  `pts` INT NULL DEFAULT 0,
+  `pts` INT(11) NULL DEFAULT NULL,
   PRIMARY KEY (`matches_id`, `player_profile_id`),
   INDEX `fk_matches_has_players_profiles_players_profiles1_idx` (`player_profile_id` ASC) VISIBLE,
   INDEX `fk_matches_has_players_profiles_matches1_idx` (`matches_id` ASC) VISIBLE,
@@ -100,11 +100,14 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`players_statistics` (
   `player_profile_id` INT(11) NOT NULL,
   `matches_won` INT(11) NULL DEFAULT 0,
   `matches_lost` INT(11) NULL DEFAULT 0,
+  `matches_played` INT(11) NULL DEFAULT 0,
   `tournaments_won` INT(11) NULL DEFAULT 0,
-  `tournaments_lost` INT(11) NULL DEFAULT 0,
   `tournaments_played` INT(11) NULL DEFAULT 0,
-  `ratio` DECIMAL(2,0) NULL DEFAULT 0,
+  `most_played_opp` VARCHAR(45) NULL DEFAULT NULL,
+  `best_opp` VARCHAR(45) NULL DEFAULT NULL,
+  `worst_opp` VARCHAR(45) NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE INDEX `player_profile_id_UNIQUE` (`player_profile_id` ASC) VISIBLE,
   INDEX `fk_players_statistics_players_profiles1_idx` (`player_profile_id` ASC) VISIBLE,
   CONSTRAINT `fk_players_statistics_players_profiles1`
     FOREIGN KEY (`player_profile_id`)
@@ -125,6 +128,7 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`users` (
   `player_profile_id` INT(11) NULL DEFAULT NULL,
   `user_role` VARCHAR(45) NOT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE INDEX `player_profile_id_UNIQUE` (`player_profile_id` ASC) VISIBLE,
   UNIQUE INDEX `email_UNIQUE` USING HASH (`email`) VISIBLE,
   INDEX `fk_users_players_profiles1_idx` (`player_profile_id` ASC) VISIBLE,
   CONSTRAINT `fk_users_players_profiles1`
@@ -158,7 +162,6 @@ CREATE TABLE IF NOT EXISTS `matchscore_db`.`requests` (
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
-AUTO_INCREMENT = 6
 DEFAULT CHARACTER SET = latin1;
 
 

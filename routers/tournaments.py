@@ -3,7 +3,7 @@ from data.models import UpdateParticipantModel, NewPhase, TournamentCreateModel
 from common.validators import (tournament_format_validator, validate_tournament_start_date, validate_participants,
                                _MATCH_PHASES)
 from common.exceptions import NoContent, NotFound, Unauthorized, BadRequest
-from services import tournaments_service, match_service, user_service
+from services import tournaments_service, match_service, user_service, player_service
 from authentication.jwt_bearer import JWTBearer
 from authentication.auth import get_user_from_token
 from datetime import date
@@ -30,7 +30,7 @@ def create_tournament(tournament: TournamentCreateModel, token: str = Depends(JW
     """Only director can create tournaments"""
     # ----------- check if user is authorized to create a tournament -------------------
     user = get_user_from_token(token)
-    if user.user_role != 'Director':
+    if user is None or user.user_role != 'Director':
         raise Unauthorized(detail='Only directors can create a tournament')
     # ----------- check if tournament already exists ---------------------------
     if tournaments_service.tournament_exists(tournament.title):
@@ -41,13 +41,14 @@ def create_tournament(tournament: TournamentCreateModel, token: str = Depends(JW
                             players if not user_service.player_profile_exists(name)]
     if not players_profiles_ids:
         players_profiles_ids = [user_service.get_player_profile_by_fullname(name).id for name in players]
+    _ = [player_service.update_player_stat_tourn(pl_id, False) for pl_id in players_profiles_ids]
     tournament = tournaments_service.create_tournament(tournament)
     _ = tournaments_service.insert_participants_into_tournament(players_profiles_ids, tournament.id)
     if tournament_format_validator(tournament.tour_format) == "Knockout":
         player_schema = tournaments_service.generate_knockout_schema(players)
         tournament.scheme_format = tournaments_service.get_scheme_format(len(tournament.participants))
     elif tournament_format_validator(tournament.tour_format) == "League":
-        tournament.scheme_format = "League"
+        tournament.scheme_format = "One vs all"
         player_schema = tournaments_service.generate_league_schema(players)
     tournament.matches = match_service.create_matches(tournament, player_schema)
     return tournament
