@@ -10,7 +10,7 @@ from datetime import date
 
 
 def get_all_tournaments(title, tour_format):
-    query = "SELECT id, title, format, prize, start_date FROM tournaments"
+    query = "SELECT id, title, format, prize, start_date, winner FROM tournaments"
     params = []
     where_clauses = []
     if title:
@@ -27,7 +27,7 @@ def get_all_tournaments(title, tour_format):
 
 
 def get_tournament_by_id(tour_id: int):
-    data = read_query('SELECT id, title, format, prize, start_date FROM tournaments WHERE id = ?', (tour_id,))
+    data = read_query('SELECT id, title, format, prize, start_date, winner FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
     tournament.participants = get_tournament_participants(tournament.id)
     # if tournament.scheme_format
@@ -141,4 +141,5 @@ def insert_participants_into_tournament(player_profiles_id: list[int], tournamen
                             VALUES(?,?)''', (tournament_id, player_id))
 
 
-
+def insert_tournament_winner(tournament: Tournament, player: Player) -> None:
+    update_query("UPDATE tournaments SET winner = ? WHERE id = ?", (player.full_name, tournament.id))
