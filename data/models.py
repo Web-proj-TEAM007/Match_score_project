@@ -200,3 +200,10 @@ class PlayerStatistics(Player):
                    most_played_against=most_played_against,
                    best_opponent=best_opponent,
                    worst_opponent=worst_opponent)
+
+class Player_Director_ApproveMailer(BaseModel):
+    email: str
+    approval: int
+
+class Notify_player(BaseModel):
+    email: str
