@@ -44,7 +44,7 @@ def update_player_stat_matches(player_id: int, win: bool) -> None | BadRequest:
 
     if win:
         ans =update_query('''UPDATE players_statistics SET matches_won = matches_won + 1, 
-                                                            matches_played = matches_played + 1, 
+                                                            matches_played = matches_played + 1 
                             WHERE player_profile_id = ?''', (player_id,))
     else:
         ans =update_query('''UPDATE players_statistics SET matches_played = matches_played + 1, 
