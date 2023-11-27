@@ -29,7 +29,8 @@ def get_all_tournaments(title, tour_format):
 def get_tournament_by_id(tour_id: int):
     data = read_query('SELECT id, title, format, prize, start_date, winner FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
-    tournament.participants = get_tournament_participants(tournament.id)
+    if tournament:
+        tournament.participants = get_tournament_participants(tournament.id)
     # if tournament.scheme_format
     # tournament.scheme_format = get_scheme_format(len(get_tournament_participants(tournament.id)))
     return tournament
