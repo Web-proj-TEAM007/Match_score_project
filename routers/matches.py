@@ -59,13 +59,13 @@ def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = D
 
     if ans and user.user_role.capitalize() != 'Director':
         raise Unauthorized('The match already finished and only Director can change the score.')
+    pl_1_id, pl_2_id = match_service.get_match_players(match_id)
+    if not match_service.check_player_in_match(pl_1_id, match_id):
+        raise BadRequest(f'Player #{pl_1_id} not found in match #{match_id}')
+    if not match_service.check_player_in_match(pl_2_id, match_id):
+        raise BadRequest(f'Player #{pl_2_id} not found in match #{match_id}')
 
-    if not match_service.check_player_in_match(match_score.pl_1_id, match_id):
-        raise BadRequest(f'Player #{match_score.pl_1_id} not found in match #{match_id}')
-    if not match_service.check_player_in_match(match_score.pl_2_id, match_id):
-        raise BadRequest(f'Player #{match_score.pl_2_id} not found in match #{match_id}')
-
-    return match_service.change_match_score(match_id, match_score)
+    return match_service.change_match_score(pl_1_id, pl_2_id, match_id, match_score)
     
 @match_router.put('/{match_id}/set-date', tags=['Matches'])
 def set_match_date(match_id: int, match_date: SetMatchDate, token: str = Depends(JWTBearer())):
