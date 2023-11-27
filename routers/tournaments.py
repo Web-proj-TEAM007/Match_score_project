@@ -22,6 +22,7 @@ def get_all_tournaments(title: str = Query(None, description="Get tournament by 
     for tournament in tournaments:
         tournament.matches = match_service.get_matches_for_tournament(tournament.id)
         tournament.participants = tournaments_service.get_tournament_participants(tournament.id)
+        tournament.match_format = tournament.matches[0].format
     return tournaments
 
 
@@ -62,6 +63,7 @@ def get_tournament_by_id(tournament_id: int = Query(..., description='Enter desi
     tournament.matches = match_service.get_matches_for_tournament(tournament.id)
     if not tournament.start_date:
         tournament.start_date = 'Not set yet'
+    tournament.match_format = tournament.matches[0].format
     return tournament
 
 
