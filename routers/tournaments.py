@@ -22,7 +22,8 @@ def get_all_tournaments(title: str = Query(None, description="Get tournament by 
     for tournament in tournaments:
         tournament.matches = match_service.get_matches_for_tournament(tournament.id)
         tournament.participants = tournaments_service.get_tournament_participants(tournament.id)
-        tournament.match_format = tournament.matches[0].format
+        if tournament.matches:
+            tournament.match_format = tournament.matches[0].format
     return tournaments
 
 
@@ -90,19 +91,20 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
     return result
 
 
-@tournaments_router.put("/{tournament_id}/phases", tags=['Tournaments'])
-def move_phase(tournament_id: int, current_phase: NewPhase, token: str = Depends(JWTBearer())):
-    user = get_user_from_token(token)
-    if user.user_role != 'Director':
-        raise Unauthorized(content='Only directors can change tournament phase')
-    tournament_exists = tournaments_service.tournament_exists_by_id(tournament_id)
-    if not tournament_exists:
-        raise NotFound(f'Tournament #{tournament_id} not found.')
-
-    if current_phase.current_phase not in _MATCH_PHASES:
-        raise BadRequest('Invalid phase.')
-
-    match_ids = match_service.get_matches_ids(tournament_id, current_phase.current_phase)
-    winners_reversed = match_service.get_winners_ids(match_ids)
-
-    return match_service.create_next_phase(winners_reversed, current_phase.current_phase, tournament_id)
+# @tournaments_router.put("/{tournament_id}/phases", tags=['Tournaments'])
+# def move_phase(tournament_id: int, current_phase: NewPhase, token: str = Depends(JWTBearer())):
+#     user = get_user_from_token(token)
+#     if user.user_role != 'Director':
+#         raise Unauthorized(content='Only directors can change tournament phase')
+#     tournament = get_tournament_by_id(tournament_id)
+#     if tournament.tour_format == 'League':
+#         raise BadRequest(detail='Only knockout tournaments can change phases')
+#     if current_phase.current_phase not in _MATCH_PHASES:
+#         raise BadRequest('Invalid phase.')
+#
+#     match_ids = match_service.get_matches_ids(tournament.id, current_phase.current_phase)
+#     if not match_ids:
+#         raise NotFound(detail=f'No available matches with phase: {current_phase.current_phase}')
+#     winners_reversed = match_service.get_winners_ids(match_ids)
+#
+#     return match_service.create_next_phase(winners_reversed, current_phase.current_phase, tournament)
