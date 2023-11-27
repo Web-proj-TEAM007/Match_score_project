@@ -5,7 +5,7 @@ from fastapi import Response
 from mailjet_rest import Client
 import os
 
-def requests(user_role, user_id):
+def вrequests(user_role, user_id):
     
     if user_role != 'admin':
         return BadRequest('Access not allowed!')
