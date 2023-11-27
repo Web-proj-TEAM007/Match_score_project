@@ -8,7 +8,7 @@ import os
 def requests(user_role, user_id):
     
     if user_role != 'admin':
-        return BadRequest('Access not allowed!')
+        raise BadRequest('Access not allowed!')
     
     if user_id == None:
         data = read_query('''SELECT id, request, user_id FROM requests ''')
@@ -21,7 +21,7 @@ def requests(user_role, user_id):
 def handle(user_id,user_role):
 
     if user_role != 'admin':
-        return BadRequest('Access not allowed!')
+        raise BadRequest('Access not allowed!')
     
     update_query('''UPDATE users SET user_role = ? WHERE id = ?''',
                     ('Director', user_id,))
@@ -32,7 +32,7 @@ def handle(user_id,user_role):
 def link(user_id,player_id,user_role):
 
     if user_role != 'admin':
-        return BadRequest('Access not allowed!')
+        raise BadRequest('Access not allowed!')
 
     update_query('''UPDATE users SET player_profile_id = ? WHERE id = ?''',
                     (player_id, user_id,))
@@ -44,7 +44,7 @@ def link(user_id,player_id,user_role):
 def send_email_player(user_email, approval, user_role):
 
     if user_role != 'admin':
-        return BadRequest('Access not allowed!')
+        raise BadRequest('Access not allowed!')
 
     answer = {}
 
@@ -89,7 +89,7 @@ def send_email_player(user_email, approval, user_role):
 def send_email_director(user_email, approval, user_role):
 
     if user_role != 'admin':
-        return BadRequest('Access not allowed!')
+        raise BadRequest('Access not allowed!')
 
     answer = {}
 
@@ -133,7 +133,7 @@ def send_email_director(user_email, approval, user_role):
 def tournament_entry_notification(user_email, user_role):
 
     if user_role != 'admin':
-        return BadRequest('Access not allowed!')
+        raise BadRequest('Access not allowed!')
 
     """
     This call sends a message to one recipient.
@@ -167,7 +167,7 @@ def tournament_entry_notification(user_email, user_role):
 def match_entry_notification(user_email, user_role):
 
     if user_role != 'admin':
-        return BadRequest('Access not allowed!')
+        raise BadRequest('Access not allowed!')
 
     """
     This call sends a message to one recipient.
