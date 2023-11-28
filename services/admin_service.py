@@ -4,6 +4,7 @@ from data.models import RequestsResponseModel
 from fastapi import Response
 from mailjet_rest import Client
 import os
+from common.validators import _STATUS
 
 def requests(user_role, user_id):
     
@@ -11,32 +12,40 @@ def requests(user_role, user_id):
         raise BadRequest('Access not allowed!')
     
     if user_id == None:
-        data = read_query('''SELECT id, request, user_id FROM requests ''')
+        data = read_query('''SELECT id, request, user_id, player_profile_id FROM requests ''')
     else:
-        data = read_query('''SELECT id, request, user_id FROM requests 
+        data = read_query('''SELECT id, request, user_id, player_profile_id FROM requests 
                                 WHERE user_id = ?''',(user_id,))
     
     return (RequestsResponseModel.from_query_result(*row) for row in data)
 
-def handle(user_id,user_role):
+def handle(user_id, approved, user_role):
+
+
 
     if user_role != 'admin':
         raise BadRequest('Access not allowed!')
     
     update_query('''UPDATE users SET user_role = ? WHERE id = ?''',
                     ('Director', user_id,))
-    update_query('''DELETE FROM requests WHERE user_id = ? ''',(user_id,))
+    update_query('''UPDATE users, requests SET users.user_role = ?, requests.approved = ?
+                  WHERE users.id = ? AND requests.user_id = ?''',
+                    ('Director', _STATUS[approved] ,user_id, user_id))
+    # update_query('''DELETE FROM requests WHERE user_id = ? ''',(user_id,))
     
     return Response(status_code=200)
    
-def link(user_id,player_id,user_role):
+def link(user_id, player_id, approved, user_role):
+
+    
 
     if user_role != 'admin':
         raise BadRequest('Access not allowed!')
 
-    update_query('''UPDATE users SET player_profile_id = ? WHERE id = ?''',
-                    (player_id, user_id,))
-    update_query('''DELETE FROM requests WHERE user_id = ? ''',(user_id,))
+    update_query('''UPDATE users, requests SET users.player_profile_id = ?, requests.approved = ?
+                  WHERE users.id = ? AND requests.user_id = ?''',
+                    (player_id, _STATUS[approved] ,user_id, user_id))
+    # update_query('''DELETE FROM requests WHERE user_id = ? ''',(user_id,))
 
     return Response(status_code=201, content="Request accepted")
     
