@@ -1,12 +1,13 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, Match
+from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, Match, NewPhase
 import random
 from common.validators import tournament_format_validator
-from common.exceptions import BadRequest
+from common.exceptions import BadRequest, NotFound
 from fastapi import Response
 from services import user_service, match_service
 import itertools
 from datetime import date
+from common.validators import _MATCH_PHASES
 
 
 def get_all_tournaments(title, tour_format):
@@ -26,12 +27,13 @@ def get_all_tournaments(title, tour_format):
     return tournaments
 
 
-def get_tournament_by_id(tour_id: int):
+def get_tournament_by_id(tour_id: int) -> Tournament:
     data = read_query('SELECT id, title, format, prize, start_date, winner FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
-    tournament.participants = get_tournament_participants(tournament.id)
-    # if tournament.scheme_format
-    # tournament.scheme_format = get_scheme_format(len(get_tournament_participants(tournament.id)))
+    if tournament:
+        tournament.participants = get_tournament_participants(tournament.id)
+        tournament.matches = match_service.get_matches_for_tournament(tournament.id)
+        tournament.match_format = tournament.matches[-1].format
     return tournament
 
 
@@ -63,26 +65,23 @@ def get_tournament_participants(tour_id: int) -> list[Player]:
 
 
 def manage_tournament(tournament, new_date: date | None, change_participants: UpdateParticipantModel | None):
-    response = []
     if new_date:
         old_date = tournament.start_date
         update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", (new_date, tournament.id))
-        response.append(Response(status_code=200, content=f'Successfully changed tournament start date from '
-                                                          f'{old_date} to {new_date}'))
+        return Response(status_code=200, content=f'Successfully changed tournament start date from '
+                                                          f'{old_date} to {new_date}')
     if change_participants:
         new_player = user_service.get_player_profile_by_fullname(change_participants.new_player)
         old_player = user_service.get_player_profile_by_fullname(change_participants.old_player)
         tournament.participants.remove(old_player)
         tournament.participants.append(new_player)
         if match_service.update_participants_for_matches(tournament, old_player, new_player):
-            response.append(Response(status_code=200, content=f'Successfully changed tournament participant: '
+            return Response(status_code=200, content=f'Successfully changed tournament participant: '
                                                               f'{old_player.full_name} with {new_player.full_name} '
-                                                              f'and updated upcoming matches with the new player'))
-        else:
-            response.append(Response(status_code=200, content=f'Successfully changed tournament participant: '
+                                                              f'and updated upcoming matches with the new player')
+        return Response(status_code=200, content=f'Successfully changed tournament participant: '
                                                               f'{old_player.full_name} with {new_player.full_name}, '
-                                                              f'no matches are updated'))
-    return response
+                                                              f'no matches are updated')
 
 
 def generate_knockout_schema(players):
@@ -143,3 +142,39 @@ def insert_participants_into_tournament(player_profiles_id: list[int], tournamen
 
 def insert_tournament_winner(tournament: Tournament, player: Player) -> None:
     update_query("UPDATE tournaments SET winner = ? WHERE id = ?", (player.full_name, tournament.id))
+
+
+def check_if_league_is_over(tournament_id: int) -> int | None:
+    # League is considered as over when all matches have been played
+    total_matches = match_service.get_matches_for_tournament(tournament_id)
+    matches_played = match_service.get_all_finished_league_matches(tournament_id)
+    if len(matches_played) == len(total_matches):
+        winner_id = match_service.get_league_winner(tournament_id)
+        return winner_id
+    return None
+
+
+def check_if_knockout_phase_is_over(tournament: Tournament):
+    matches_phases = [match.match_phase for match in tournament.matches]
+    last_phase = matches_phases[-1] if matches_phases else None
+    matches_played = match_service.get_all_finished_knockout_matches(tournament.id, match_phase=last_phase)
+    total_matches = match_service.get_matches_with_exact_phase(tournament.id, match_phase=last_phase)
+    if len(matches_played) == len(total_matches):
+        return True, last_phase
+    return False
+
+
+def move_phase(tournament_id: int, current_phase: str):
+    # user = get_user_from_token(token)
+    # if user.user_role != 'Director':
+    #     raise Unauthorized(content='Only directors can change tournament phase')
+    tournament = get_tournament_by_id(tournament_id)
+    # if tournament.tour_format == 'League':
+    #     raise BadRequest(detail='Only knockout tournaments can change phases')
+    if current_phase not in _MATCH_PHASES:
+        raise BadRequest('Invalid phase.')
+    match_ids = match_service.get_matches_ids(tournament.id, current_phase)
+    if not match_ids:
+        raise NotFound(detail=f'No available matches with phase: {current_phase}')
+    winners_reversed = match_service.get_winners_ids(match_ids)
+    return match_service.create_next_phase(winners_reversed, current_phase, tournament)

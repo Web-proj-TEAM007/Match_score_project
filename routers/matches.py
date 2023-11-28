@@ -12,7 +12,7 @@ match_router = APIRouter(prefix='/matches')
 #                                                                      'YYYY-MM-DDTHH:MM:SS eg. 2023-10-21T00:00:00 :'),
 #                     sort_by_tournament_id: int = Query(default=None, description='Search by topic id')):
 
-@match_router.get("/")
+@match_router.get("/", tags=['Matches'])
 def get_all_matches(sort: str | None = 'asc', 
                     sort_by: str | None = None, 
                     page: int | None = None, 
@@ -32,7 +32,7 @@ def get_all_matches(sort: str | None = 'asc',
         return Response(status_code=200, content='No matches')
     return matches
 
-@match_router.get('/{match_id}')
+@match_router.get('/{match_id}', tags=['Matches'])
 def get_match_by_id(match_id: int):
 
     ans = match_service.match_exists(match_id)
@@ -42,7 +42,7 @@ def get_match_by_id(match_id: int):
     return match_service.get_match_by_id(match_id)
 
 
-@match_router.get('/tournaments/{tourn_id}')
+@match_router.get('/tournaments/{tourn_id}', tags=['Matches'])
 def get_matches_by_tournament(tourn_id: int):
 
     ans = tournaments_service.tournament_exists_by_id(tourn_id)
@@ -51,7 +51,7 @@ def get_matches_by_tournament(tourn_id: int):
 
     return match_service.get_matches_for_tournament(tourn_id)
 
-@match_router.put('/{match_id}')
+@match_router.put('/{match_id}', tags=['Matches'])
 def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = Depends(JWTBearer())):
 
     ans = match_service.check_match_finished(match_id)
@@ -59,15 +59,15 @@ def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = D
 
     if ans and user.user_role.capitalize() != 'Director':
         raise Unauthorized('The match already finished and only Director can change the score.')
+    pl_1_id, pl_2_id = match_service.get_match_players(match_id)
+    if not match_service.check_player_in_match(pl_1_id, match_id):
+        raise BadRequest(f'Player #{pl_1_id} not found in match #{match_id}')
+    if not match_service.check_player_in_match(pl_2_id, match_id):
+        raise BadRequest(f'Player #{pl_2_id} not found in match #{match_id}')
 
-    if not match_service.check_player_in_match(match_score.pl_1_id, match_id):
-        raise BadRequest(f'Player #{match_score.pl_1_id} not found in match #{match_id}')
-    if not match_service.check_player_in_match(match_score.pl_2_id, match_id):
-        raise BadRequest(f'Player #{match_score.pl_2_id} not found in match #{match_id}')
-
-    return match_service.change_match_score(match_id, match_score)
+    return match_service.change_match_score(pl_1_id, pl_2_id, match_id, match_score)
     
-@match_router.put('/{match_id}/set-date')
+@match_router.put('/{match_id}/set-date', tags=['Matches'])
 def set_match_date(match_id: int, match_date: SetMatchDate, token: str = Depends(JWTBearer())):
     '''datetime input example:
             "date": "2023-11-11 15:30"

@@ -5,7 +5,7 @@ from services import player_service
 players_router = APIRouter(prefix='/players')
 
 
-@players_router.get("/{player_id}")
+@players_router.get("/{player_id}", tags=['Player'])
 def get_player_byID(player_id: int):
 
     if not player_service.player_exists_id(player_id):
