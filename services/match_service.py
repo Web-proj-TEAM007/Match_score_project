@@ -335,12 +335,17 @@ def update_participants_for_matches(tournament, old_player, new_player):
                 "UPDATE matches_has_players_profiles SET player_profile_id = ? WHERE matches_id = ? AND "
                 "player_profile_id = ?",
                 (new_player.id, match_id, old_player.id))
-        update_query(
+            update_query(
             "UPDATE tournaments_has_players_profiles SET player_profile_id = ? WHERE tournament_id = ? AND "
             "player_profile_id = ?",
             (new_player.id, tournament.id, old_player.id))
-        return True
+            return True
+    update_query(
+        "UPDATE tournaments_has_players_profiles SET player_profile_id = ? WHERE tournament_id = ? AND "
+        "player_profile_id = ?",
+        (new_player.id, tournament.id, old_player.id))
     return False
+
 
 
 def check_if_match_final(match_id: int) -> bool:
