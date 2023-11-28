@@ -68,10 +68,27 @@ def get_tournament_by_id(tournament_id: int = Query(..., description='Enter desi
     return tournament
 
 
-@tournaments_router.patch("/manage-event/{tour_id}", tags=['Tournaments'])
+@tournaments_router.patch("/manage-tournament-date/{tour_id}", tags=['Tournaments'])
 def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'),
-                      change_tournament_start_date: date = Query(None,
+                      change_tournament_start_date: date = Body(None,
                                                                  description='Change tournament start date'),
+                      token: str = Depends(JWTBearer())):
+    """Only director can change date tournaments"""
+    user = get_user_from_token(token)
+    if user.user_role != 'Director':
+        raise Unauthorized(content='Only directors can manage a tournament')
+    tournament = tournaments_service.get_tournament_by_id(tour_id)
+    if not tournament:
+        raise NotFound(f'Tournament with id: {tour_id}, does not exist.')
+    if change_tournament_start_date:
+        if tournament.start_date:
+            validate_tournament_start_date(tournament.start_date, change_tournament_start_date)
+    result = tournaments_service.manage_tournament(tournament, change_tournament_start_date, None)
+    return result
+
+
+@tournaments_router.patch("/manage-tournament-participants/{tour_id}", tags=['Tournaments'])
+def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'),
                       update_participants: UpdateParticipantModel = Body(None,
                                                                          description='Update participants'),
                       token: str = Depends(JWTBearer())):
@@ -82,29 +99,9 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
     tournament = tournaments_service.get_tournament_by_id(tour_id)
     if not tournament:
         raise NotFound(f'Tournament with id: {tour_id}, does not exist.')
-    if change_tournament_start_date:
-        if tournament.start_date:
-            validate_tournament_start_date(tournament.start_date, change_tournament_start_date)
     if update_participants:
         validate_participants(tournament, update_participants)
-    result = tournaments_service.manage_tournament(tournament, change_tournament_start_date, update_participants)
+    result = tournaments_service.manage_tournament(tournament, None, update_participants)
     return result
 
 
-# @tournaments_router.put("/{tournament_id}/phases", tags=['Tournaments'])
-# def move_phase(tournament_id: int, current_phase: NewPhase, token: str = Depends(JWTBearer())):
-#     user = get_user_from_token(token)
-#     if user.user_role != 'Director':
-#         raise Unauthorized(content='Only directors can change tournament phase')
-#     tournament = get_tournament_by_id(tournament_id)
-#     if tournament.tour_format == 'League':
-#         raise BadRequest(detail='Only knockout tournaments can change phases')
-#     if current_phase.current_phase not in _MATCH_PHASES:
-#         raise BadRequest('Invalid phase.')
-#
-#     match_ids = match_service.get_matches_ids(tournament.id, current_phase.current_phase)
-#     if not match_ids:
-#         raise NotFound(detail=f'No available matches with phase: {current_phase.current_phase}')
-#     winners_reversed = match_service.get_winners_ids(match_ids)
-#
-#     return match_service.create_next_phase(winners_reversed, current_phase.current_phase, tournament)
