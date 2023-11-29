@@ -39,7 +39,7 @@ def create_tournament(tournament: TournamentCreateModel, token: str = Depends(JW
         return Response(f'{tournament.title} already exists')
     # ---------- check if each player is already existing, if not, create one and link it to profile --------
     players = tournament.participants.copy()
-    players_profiles_ids = [user_service.create_player_statistic(player_service.create_player_profile(name)) for name in
+    players_profiles_ids = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
                             players if not user_service.player_profile_exists(name)]
     if not players_profiles_ids:
         players_profiles_ids = [user_service.get_player_profile_by_fullname(name).id for name in players]

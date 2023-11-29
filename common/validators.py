@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from services import user_service, player_service
+from services import user_service
 from common.exceptions import BadRequest, NotFound
 
 
@@ -41,7 +41,7 @@ def validate_participants(tournament, update_participants):
     if new_player in tournament.participants:
         raise BadRequest(f'Player: {update_participants.new_player} already in the tournament')
     if not new_player:
-        _ = user_service.create_player_statistic(player_service.create_player_profile(update_participants.new_player))
+        _ = user_service.create_player_statistic(user_service.create_player_profile(update_participants.new_player))
     if not any(player.full_name == update_participants.old_player for player in tournament.participants):
         raise NotFound(f'Player: {update_participants.old_player} is not part of the tournament participants')
 

@@ -28,8 +28,7 @@ def create_profile(data: Input_player, token: str = Depends(JWTBearer())):
     """Create profile with you name and country. Sport club is optional."""
 
     user_service.create_player_profile(data.full_name, data.country, data.sport_club)
-    return Response("Profile created successfully")
-
+    return Response(status_code=200, content="Profile created successfully")
 
 @users_router.post('/promote', tags=['User'])
 def promote_to_director(token: str = Depends(JWTBearer())):
