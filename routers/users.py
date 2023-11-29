@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Response
-from services import user_service
+from services import user_service, player_service
 from authentication.jwt_bearer import JWTBearer
 from data.models import RegisterUser, LoginData, Input_player, Request_Link_profile
 from authentication.auth import get_user_from_token
@@ -27,7 +27,8 @@ def user_login(data: LoginData):
 def create_profile(data: Input_player, token: str = Depends(JWTBearer())):
     """Create profile with you name and country. Sport club is optional."""
 
-    user_service.create_player_profile(data.full_name, data.country, data.sport_club)
+    player = user_service.create_player_profile(data.full_name, data.country, data.sport_club)
+    user_service.create_player_statistic(player)
     return Response(status_code=200, content="Profile created successfully")
 
 @users_router.post('/promote', tags=['User'])
