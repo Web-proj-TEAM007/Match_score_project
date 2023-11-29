@@ -18,10 +18,24 @@ class Player(BaseModel):
                    country=country,
                    sport_club=sport_club,
                    )
+    
+class Input_player(BaseModel):
+    
+    full_name: constr(pattern=r'^[a-zA-Z\s\-]+$')
+    country: Optional[str] = None
+    sport_club: Optional[str] = None
+
+    @classmethod
+    def from_query_result(cls, id, full_name, country, sport_club):
+        return cls(id=id,
+                   full_name=full_name,
+                   country=country,
+                   sport_club=sport_club,
+                   )
 
 
 class RegisterUser(BaseModel):
-    id: Optional[int] = None
+    
     email: EmailStr
     password: str
 
@@ -136,12 +150,17 @@ class RequestsResponseModel(BaseModel):
     id: int
     request: str
     user_id: int
+    player_id: Optional[int]
 
     @classmethod
-    def from_query_result(cls, id, request, user_id):
-        return cls(id=id,
-                   request=request,
-                   user_id=user_id)
+    def from_query_result(cls, id, request, user_id, player_id):
+            return cls(id=id,
+                    request=request,
+                    user_id=user_id,
+                    player_id=player_id)
+
+
+        
 
 
 class NewPhase(BaseModel):
@@ -151,6 +170,7 @@ class NewPhase(BaseModel):
 class Link_profile(BaseModel):
     user_id: int
     player_id: int
+    approved: int
 
 
 class Request_Link_profile(BaseModel):
@@ -204,3 +224,7 @@ class Player_Director_ApproveMailer(BaseModel):
 
 class Notify_player(BaseModel):
     email: str
+
+class Director_promotion(BaseModel):
+    user_id: int
+    approved: int
