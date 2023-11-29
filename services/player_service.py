@@ -1,11 +1,12 @@
 from data.database import read_query, update_query, insert_query
-from data.models import PlayerStatistics
+from data.models import PlayerStatistics, Player
 from common.validators import check_date
 from services import user_service, tournaments_service
 from common.validators import check_date, check_score, _MATCH_PHASES, _SORT_BY_VAL, form_ratio
 from datetime import datetime, date
 from common.exceptions import BadRequest
 from fastapi import Response
+from typing import Optional
 
 
 def get_player_by_id(pl_id: int):
@@ -106,3 +107,11 @@ def updating_player_opponents(player_id: int) -> None | BadRequest:
     if not ans:
         raise BadRequest('Updating player opponents went wrong.')
 
+
+def create_player_profile(full_name: str, country: Optional[str] = None,  sport_club: Optional[str] = None):
+    generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club) VALUES(?,?,?)''',
+                                (full_name, country, sport_club))
+    player = Player(full_name=full_name, country=country, sport_club=sport_club)
+    player.id = generated_id
+
+    return player
