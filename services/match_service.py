@@ -110,21 +110,18 @@ def get_participants_ids(participants: list[str]) -> list[int]:
     return players_ids
 
 
-def change_match_score(pl_1_id, pl_2_id, match_id: int, match_score: SetMatchScoreMod) -> (
+def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScoreMod) -> (
         Response | WinnerResponseMode | str):
     pl_1_score = match_score.pl_1_score
     pl_2_score = match_score.pl_2_score
-    match = get_match_by_id_v2(match_id)
-    if not match:
-        raise BadRequest(detail='Invalid match ID')
     tournament = tournaments_service.get_tournament_by_id(match.tourn_id)
     if not tournament:
         raise BadRequest(detail='Invalid tournament ID')
     match_format, value = separate_match_format(match)
-    if is_match_finished(match_id):
+    if is_match_finished(match.id):
         raise BadRequest(detail='The match has already been finished')
     match_status = match_score.match_finished
-    player1_current_score, player2_current_score = get_players_current_score(match_id, pl_1_id, pl_2_id)
+    player1_current_score, player2_current_score = get_players_current_score(match.id, pl_1_id, pl_2_id)
     player1_last_result = calculate_final_result(player1_current_score, pl_1_score, value)
     player2_last_result = calculate_final_result(player2_current_score, pl_2_score, value)
     if not isinstance(match.date, datetime):
@@ -132,24 +129,24 @@ def change_match_score(pl_1_id, pl_2_id, match_id: int, match_score: SetMatchSco
     if datetime.now() < match.date:
         raise BadRequest(detail="Match score cannot be changed before the match has been started")
     elif match_format == 'Score Limited' and (player1_last_result >= value or player2_last_result >= value):
-        result = update_winner_info(tournament.tour_format, tournament, match_id, pl_1_id, player1_last_result,
+        result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id, player1_last_result,
                                     pl_2_id, player2_last_result)
         return result if result else Response(status_code=200, content=f'Score limit reached: {value}')
         # Need additional return, most likely the match final result
     elif match_format == 'Time Limited' and time_limit_validator(match.date, value):
-        result = update_winner_info(tournament.tour_format, tournament, match_id, pl_1_id, player1_last_result,
+        result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id, player1_last_result,
                                     pl_2_id, player2_last_result)
         return result if result else Response(status_code=200, content=f'Time limit reached: {value}')
         # Need additional return, most likely the match final result
     if not match_status:
-        update_player_score(match_id, pl_1_id, pl_1_score)
-        update_player_score(match_id, pl_2_id, pl_2_score)
+        update_player_score(match.id, pl_1_id, pl_1_score)
+        update_player_score(match.id, pl_2_id, pl_2_score)
         player1, player2 = (user_service.get_player_profile_by_id(pl_1_id),
                             user_service.get_player_profile_by_id(pl_2_id))
         return (f'Score updated: {player1.full_name}: {player1_current_score} -> {player1_last_result}, '
                 f'{player2.full_name}: {player2_current_score} -> {player2_last_result}')
     elif match_status:
-        result = update_winner_info(tournament.tour_format, tournament, match_id, pl_1_id,
+        result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id,
                                     player1_last_result, pl_2_id, player2_last_result)
         return result if result else Response(status_code=200, content='Score changed successfully')
     # TODO: Proper return with response models when there is a winner, not only when it's final

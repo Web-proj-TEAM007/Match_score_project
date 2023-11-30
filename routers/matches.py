@@ -56,7 +56,9 @@ def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = D
 
     ans = match_service.check_match_finished(match_id)
     user = get_user_from_token(token)
-
+    match = match_service.get_match_by_id_v2(match_id)
+    if not match:
+        raise BadRequest(detail=f'Match with {match_id} id does not exist.')
     if ans and user.user_role.capitalize() != 'Director':
         raise Unauthorized('The match already finished and only Director can change the score.')
     pl_1_id, pl_2_id = match_service.get_match_players(match_id)
@@ -73,19 +75,15 @@ def set_match_date(match_id: int, match_date: SetMatchDate, token: str = Depends
             "date": "2023-11-11 15:30"
             '''
     user = get_user_from_token(token)
-
+    if not match_service.match_exists(match_id):
+        raise NotFound(f'Match #{match_id} not found.')
     if match_date.date < datetime.now():
         raise BadRequest(f'Datetime cannot be in the past.')
-    
     if match_service.check_match_finished(match_id):
         raise BadRequest(f'Match #{match_id} already finished, cannot change date.')
-
     if user.user_role.lower() != 'director':
         raise Unauthorized(f'Request denied. You are not Director.')
 
-    if not match_service.match_exists(match_id):
-        raise NotFound(f'Match #{match_id} not found.')
-    
     return match_service.set_match_date(match_id, match_date.date)
 
 
