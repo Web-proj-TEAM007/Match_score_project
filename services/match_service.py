@@ -121,7 +121,7 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
     if is_match_finished(match.id):
         raise BadRequest(detail='The match has already been finished')
     match_status = match_score.match_finished
-    player1_current_score, player2_current_score = get_players_current_score(match_id, pl_1_id, pl_2_id)
+    player1_current_score, player2_current_score = get_players_current_score(match.id, pl_1_id, pl_2_id)
     player1_last_result = calculate_final_result(player1_current_score, pl_1_score, value)
     player2_last_result = calculate_final_result(player2_current_score, pl_2_score, value)
     if not isinstance(match.date, datetime):
