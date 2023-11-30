@@ -3,7 +3,8 @@ from services import user_service, player_service
 from authentication.jwt_bearer import JWTBearer
 from data.models import RegisterUser, LoginData, Input_player, Request_Link_profile
 from authentication.auth import get_user_from_token
-from common.exceptions import NotFound
+from common.exceptions import NotFound, BadRequest
+
 
 
 users_router = APIRouter(prefix='/users')
@@ -43,15 +44,11 @@ def promote_to_director(token: str = Depends(JWTBearer())):
 def make_request(profile: Request_Link_profile, token: str = Depends(JWTBearer())):
     """Request to link your player profile with your user registration."""
     user = get_user_from_token(token)
+    if not user_service.get_player_profile_by_id(profile.player_id):
+        raise BadRequest(f'Player with id: {profile.player_id} do not exist')
+    if user_service.is_user_linked_to_a_profile(user):
+        linked_profile = user_service.get_user_player_profile_full_name(user)
+        raise BadRequest(f'Already linked to a profile with full name: {linked_profile}')
     return user_service.request(user.id, profile.player_id)
 
 
-@users_router.put('/{user_id}', tags=['User'])
-def change_user_role(user_id: int, new_role: str):
-    """Change a user role upon request"""
-
-    ans = user_service.user_exists(user_id)
-    if not ans:
-        raise NotFound(f'User #{user_id} not found.')
-
-    return user_service.change_user_role(user_id, new_role)
