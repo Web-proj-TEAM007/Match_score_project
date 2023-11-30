@@ -13,11 +13,12 @@ admin_router = APIRouter(prefix='/admin')
 
 @admin_router.get('/requests', tags=['Admin'])
 def get_all(user_id: int = None,
+            unprocessed: bool = False,
             token: str = Depends(JWTBearer())):
     """See all requests"""
 
     user = get_user_from_token(token)
-    return admin_service.requests(user.user_role, user_id)
+    return admin_service.requests(user.user_role, unprocessed, user_id)
 
 
 @admin_router.put('/requests/director', tags=['Admin'])
