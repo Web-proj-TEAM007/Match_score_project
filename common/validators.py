@@ -8,7 +8,7 @@ _MATCH_FORMATS = ('Time limited', 'Score limited')
 _MATCH_PHASES = ('final', 'semi-final', 'quarterfinals', 'eight-final')
 _SORT_BY_VAL = ('date', 'tournament_id')
 _STATUS = (False,True)
-
+_USER_ROLES = ('admin', 'director', 'user')
 
 def tournament_format_validator(tour_format: str):
     if tour_format not in _TOURNAMENT_FORMATS:
@@ -65,3 +65,9 @@ def form_ratio(matches_won: int, matches_lost: int) -> str:
 
     ratio = str(matches_won) + '/' + str(matches_lost)
     return ratio
+
+
+def validate_user_roles(user_role: str):
+    if user_role.lower() not in _USER_ROLES:
+        raise BadRequest(f'{user_role} not a valid user role')
+    return user_role.lower()

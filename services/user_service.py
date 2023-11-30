@@ -116,5 +116,16 @@ def create_player_profile(full_name: str, country: Optional[str] = None,  sport_
                                 (full_name, country, sport_club))
     player = Player(full_name=full_name, country=country, sport_club=sport_club)
     player.id = generated_id
-
     return player
+
+
+def is_user_linked_to_a_profile(user) -> bool:
+    data = read_query('''SELECT 1 FROM users WHERE id = ? AND player_profile_id IS NOT NULL''', (user.id,))
+    return True if data else False
+
+
+def get_user_player_profile_full_name(user):
+    profile_id = read_query('''SELECT player_profile_id FROM users WHERE id = ?''', (user.id,))
+    profile_full_name = read_query('''SELECT full_name FROM players_profiles WHERE id = ?''',
+                                   (profile_id[0][0],))
+    return profile_full_name[0][0]
