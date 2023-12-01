@@ -7,7 +7,7 @@ from fastapi import Response
 from services import user_service, match_service
 import itertools
 from datetime import date
-from common.validators import _MATCH_PHASES
+from common.validators import _MATCH_PHASES, validate_match_date
 
 
 def get_all_tournaments(title, tour_format):
@@ -31,15 +31,16 @@ def get_tournament_by_id(tour_id: int) -> Tournament:
     data = read_query('SELECT id, title, format, prize, start_date, winner FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
     if tournament:
-        tournament.participants = get_tournament_participants(tournament.id)
+        participants = get_tournament_participants(tournament.id)
+        tournament.participants = [player.full_name for player in participants]
         tournament.matches = match_service.get_matches_for_tournament(tournament.id)
-        tournament.match_format = tournament.matches[-1].format
+        tournament.match_format = tournament.matches[-1].format if tournament.matches else 'No matches'
     return tournament
 
 
 def create_tournament(tournament: TournamentCreateModel) -> Tournament:
     generated_id = insert_query("INSERT INTO tournaments (format, title, prize, start_date) VALUES (?, ?, ?, ?)",
-                                (tournament.tour_format, tournament.title,
+                                (tournament.tour_format.lower(), tournament.title,
                                  tournament.prize, tournament.start_date))
     return Tournament(
         id=generated_id,
@@ -68,6 +69,11 @@ def manage_tournament(tournament, new_date: date | None, change_participants: Up
     if new_date:
         old_date = tournament.start_date
         update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", (new_date, tournament.id))
+        for match in tournament.matches:
+            if match_service.is_match_finished(match.id):
+                continue
+            match_date = validate_match_date(match, new_date)
+            match_service.set_match_date(match.id, match_date)
         return Response(status_code=200, content=f'Successfully changed tournament start date from '
                                                           f'{old_date} to {new_date}')
     if change_participants:
@@ -178,3 +184,13 @@ def move_phase(tournament_id: int, current_phase: str):
         raise NotFound(detail=f'No available matches with phase: {current_phase}')
     winners_reversed = match_service.get_winners_ids(match_ids)
     return match_service.create_next_phase(winners_reversed, current_phase, tournament)
+
+
+def validate_participants(tournament, update_participants):
+    new_player = user_service.get_player_profile_by_fullname(update_participants.new_player)
+    if new_player in tournament.participants:
+        raise BadRequest(f'Player: {update_participants.new_player} already in the tournament')
+    if not new_player:
+        _ = user_service.create_player_statistic(user_service.create_player_profile(update_participants.new_player))
+    if not any(player.full_name == update_participants.old_player for player in tournament.participants):
+        raise NotFound(f'Player: {update_participants.old_player} is not part of the tournament participants')
