@@ -8,7 +8,7 @@ class PlayerService_Should(unittest.TestCase):
     def test_GetPlayerByID_returns_Successfully(self):
 
         with patch('services.player_service.read_query') as read_query, \
-            patch('common.validators.from_ratio') as form_ratio_func:
+            patch('common.validators.form_ratio') as form_ratio_func:
             # Arrange
             read_query.return_value = [(1, 'Tarzan', 'Madagascar', 
                                         'BC Balkan', 1,0,1,1,1, 'Rocky', 
