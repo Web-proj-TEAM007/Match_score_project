@@ -67,7 +67,7 @@ def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = D
     if not match_service.check_player_in_match(pl_2_id, match_id):
         raise BadRequest(f'Player #{pl_2_id} not found in match #{match_id}')
 
-    return match_service.change_match_score(pl_1_id, pl_2_id, match_id, match_score)
+    return match_service.change_match_score(pl_1_id, pl_2_id, match, match_score)
     
 @match_router.put('/{match_id}/set-date', tags=['Matches'])
 def set_match_date(match_id: int, match_date: SetMatchDate, token: str = Depends(JWTBearer())):
