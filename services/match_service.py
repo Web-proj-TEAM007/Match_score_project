@@ -114,7 +114,7 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
         Response | WinnerResponseMode | str):
     pl_1_score = match_score.pl_1_score
     pl_2_score = match_score.pl_2_score
-    tournament = tournaments_service.get_tournament_by_id(match.id)
+    tournament = tournaments_service.get_tournament_by_id(match.tourn_id)
     if not tournament:
         raise BadRequest(detail='Invalid tournament ID')
     match_format, value = separate_match_format(match)
