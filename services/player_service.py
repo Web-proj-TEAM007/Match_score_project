@@ -35,15 +35,13 @@ def player_exists_id(pl_id: int) -> bool:
                    WHERE player_profile_id = ?''', (pl_id,)))
 
 def update_player_stat_matches(player_id: int, win: bool) -> None | BadRequest:
-    # ratio = win / loss - според изискванията. Какво да връщам и да въвеждам в базата, ако играчът няма победи? За сега формулата по-долу.
-    # ratio = win / matches_played - Показва коеф. на успеяваемост, струва ми се по-логично...
 
     if win:
-        ans =update_query('''UPDATE players_statistics SET matches_won = matches_won + 1, 
+        ans = update_query('''UPDATE players_statistics SET matches_won = matches_won + 1, 
                                                             matches_played = matches_played + 1 
                             WHERE player_profile_id = ?''', (player_id,))
     else:
-        ans =update_query('''UPDATE players_statistics SET matches_played = matches_played + 1, 
+        ans = update_query('''UPDATE players_statistics SET matches_played = matches_played + 1, 
                                                             matches_lost = matches_lost + 1
                             WHERE player_profile_id = ?''', (player_id,))
 
@@ -54,14 +52,16 @@ def update_player_stat_matches(player_id: int, win: bool) -> None | BadRequest:
 def update_player_stat_tourn(player_id: int, t_win: bool) -> None | BadRequest:
 
     if t_win:
-        update_query('''UPDATE players_statistics 
+        ans = update_query('''UPDATE players_statistics 
                             SET tournaments_won = tournaments_won + 1 
                             WHERE player_profile_id = ?''', (player_id,))
     else:
-        update_query('''UPDATE players_statistics 
+        ans = update_query('''UPDATE players_statistics 
                             SET tournaments_played = tournaments_played + 1
                             WHERE player_profile_id = ?''', (player_id,))
 
+    if not ans:
+        raise BadRequest('Updating player tournament stats went wrong.')
 
 def updating_player_opponents(player_id: int) -> None | BadRequest: 
     
@@ -87,14 +87,14 @@ def updating_player_opponents(player_id: int) -> None | BadRequest:
                             ORDER BY (ps.matches_won/ps.matches_played) asc, pp.full_name
                             LIMIT 1),
                     most_played_opp = (WITH matchessss AS
-                                                        (SELECT matches_id FROM matches_has_players_profiles
-                                                        WHERE player_profile_id = ?)
-                                    SELECT full_name FROM matches_has_players_profiles mp
-                                    JOIN players_profiles pp ON pp.id = mp.player_profile_id
-                                    JOIN matchessss m ON m.matches_id = mp.matches_id and mp.player_profile_id != ?
-                                    GROUP BY player_profile_id
-                                    ORDER BY COUNT(mp.player_profile_id) desc, full_name desc
-                                    LIMIT 1)
+                                                (SELECT matches_id FROM matches_has_players_profiles
+                                                WHERE player_profile_id = ?)
+                            SELECT full_name FROM matches_has_players_profiles mp
+                            JOIN players_profiles pp ON pp.id = mp.player_profile_id
+                            JOIN matchessss m ON m.matches_id = mp.matches_id and mp.player_profile_id != ?
+                            GROUP BY player_profile_id
+                            ORDER BY COUNT(mp.player_profile_id) desc, full_name desc
+                            LIMIT 1)
                     WHERE player_profile_id = ?''', (player_id, player_id, player_id, player_id, player_id, player_id, player_id))
 
     if not ans:
