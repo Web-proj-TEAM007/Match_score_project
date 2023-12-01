@@ -1,25 +1,26 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from services import user_service
 from common.exceptions import BadRequest, NotFound
 
 
-_TOURNAMENT_FORMATS = ('Knockout', 'League')
-_MATCH_FORMATS = ('Time limited', 'Score limited')
+_TOURNAMENT_FORMATS = ('knockout', 'league')
+_MATCH_FORMATS = ('time limited', 'score limited')
 _MATCH_PHASES = ('final', 'semi-final', 'quarterfinals', 'eight-final')
 _SORT_BY_VAL = ('date', 'tournament_id')
-_STATUS = (False,True)
+_STATUS = (False, True)
 _USER_ROLES = ('admin', 'director', 'user')
 
+
 def tournament_format_validator(tour_format: str):
-    if tour_format not in _TOURNAMENT_FORMATS:
-        raise BadRequest(f"Invalid format {tour_format}, Option must be 'Knockout' or 'League'")
-    return tour_format
+    if tour_format.lower() not in _TOURNAMENT_FORMATS:
+        raise BadRequest(f"Invalid format {tour_format}, Option must be 'knockout' or 'league'")
+    return tour_format.lower()
 
 
 def match_format_validator(match_format: str):
-    if match_format not in _MATCH_FORMATS:
+    if match_format.lower() not in _MATCH_FORMATS:
         raise BadRequest(f"Invalid format: {match_format}, Option must be 'Time limited' or 'Score limited'")
-    return match_format
+    return match_format.lower()
 
 
 def check_date(date: str | datetime):
@@ -34,17 +35,6 @@ def validate_tournament_start_date(old_date, new_date):
         raise BadRequest(detail=f'Tournament start date is already set to {new_date}')
     if new_date < old_date or new_date <= date_now:
         raise BadRequest(detail='The tournament start date cannot be in the past')
-
-
-def validate_participants(tournament, update_participants):
-    new_player = user_service.get_player_profile_by_fullname(update_participants.new_player)
-    if new_player in tournament.participants:
-        raise BadRequest(f'Player: {update_participants.new_player} already in the tournament')
-    if not new_player:
-        _ = user_service.create_player_statistic(user_service.create_player_profile(update_participants.new_player))
-    if not any(player.full_name == update_participants.old_player for player in tournament.participants):
-        raise NotFound(f'Player: {update_participants.old_player} is not part of the tournament participants')
-
 
 
 def check_score(score: int | None):
@@ -71,3 +61,13 @@ def validate_user_roles(user_role: str):
     if user_role.lower() not in _USER_ROLES:
         raise BadRequest(f'{user_role} not a valid user role')
     return user_role.lower()
+
+
+def validate_match_date(match, new_date: date):
+    # match_date = match.date.date()
+    if not isinstance(match.date, datetime):
+        return new_date
+    elif match.date.date() < new_date:
+        return new_date
+    else:
+        return match.date
