@@ -114,7 +114,7 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
         Response | WinnerResponseMode | str):
     pl_1_score = match_score.pl_1_score
     pl_2_score = match_score.pl_2_score
-    tournament = tournaments_service.get_tournament_by_id(match.tourn_id)
+    tournament = tournaments_service.get_tournament_by_id(match.id)
     if not tournament:
         raise BadRequest(detail='Invalid tournament ID')
     match_format, value = separate_match_format(match)
@@ -155,7 +155,7 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
 def update_winner_info(play_format: str, tournament: Tournament, match_id: int, player1_id: int,
                        player1_score: int, player2_id: int, player2_score: int) -> None | WinnerResponseMode | Response:
     is_final = check_if_match_final(match_id)
-    if play_format == 'Knockout':
+    if play_format.capitalize() == 'Knockout':
         if player1_score > player2_score:
             update_query('''UPDATE matches_has_players_profiles
                               SET score = ?, win = 1
@@ -192,7 +192,7 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
             update_player_score(match_id, player2_id, player2_score)
             update_player_score(match_id, player1_id, player1_score)
             raise BadRequest(detail='Knockout matches cannot end draw')
-    elif play_format == 'League':
+    elif play_format.capitalize() == 'League':
         if player1_score > player2_score:
             update_query('''UPDATE matches_has_players_profiles
                                   SET score = ?, win = 1, pts = 2
