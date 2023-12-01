@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, date
-from services import user_service
 from common.exceptions import BadRequest, NotFound
 
 
