@@ -67,7 +67,7 @@ def get_player_profile_by_id(profile_id: int) -> Player:
 
 def promotion(user_id):
     insert_query('''INSERT INTO requests(request, user_id) VALUES(?,?) ''',
-                 ("Director", user_id,))
+                 ("director", user_id,))
 
     return Response(status_code=200, content='Request sent')
 
