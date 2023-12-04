@@ -187,7 +187,7 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
                 return create_winner_response(player2_id, tournament.id)
             last_phase = tournaments_service.check_if_knockout_phase_is_over(tournament)
             if last_phase:
-                tournaments_service.move_phase(tournament.id, last_phase)
+                tournaments_service.move_phase(tournament.id, last_phase[-1])
         elif player2_score == player1_score:
             update_player_score(match_id, player2_id, player2_score)
             update_player_score(match_id, player1_id, player1_score)
