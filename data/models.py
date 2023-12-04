@@ -150,6 +150,32 @@ class TournamentsAllResponseMod(BaseModel):
                    winner=winner,
                    prize=prize)
 
+class MatchesResponseMod(BaseModel):
+    match_id: int
+    score: str
+    match_date: date | None
+    tournament_title: str
+
+class TournamentByIDRespModel(BaseModel):
+    id: Optional[int] = None
+    title: str
+    tour_format: str
+    prize: int = None
+    match_format: str
+    winner: str | None = None
+    start_date: Optional[date] = None
+    matches: list[MatchesResponseMod] | None = None
+    
+
+    @classmethod
+    def from_query_result(cls, id, title, tour_format, prize, match_format, winner, start_date):
+        return cls(id=id,
+                   title=title,
+                   tour_format=tour_format.capitalize(),
+                   prize=prize,
+                   match_format=match_format,
+                   winner=winner,
+                   start_date=start_date)
 
 class TournamentCreateModel(TournamentBase):
     start_date: date
@@ -201,11 +227,7 @@ class WinnerResponseMode(BaseModel):
     country: str | None
     tournament_won: str
 
-class MatchesResponseMod(BaseModel):
-    match_id: int
-    score: str
-    match_date: datetime | None
-    tournament_title: str
+
 
 class SetMatchDate(BaseModel):
     date: datetime
