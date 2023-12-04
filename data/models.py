@@ -153,7 +153,7 @@ class TournamentsAllResponseMod(BaseModel):
 class MatchesResponseMod(BaseModel):
     match_id: int
     score: str
-    match_date: date | None
+    match_date: datetime | None
     tournament_title: str
 
 class TournamentByIDRespModel(BaseModel):
@@ -163,7 +163,7 @@ class TournamentByIDRespModel(BaseModel):
     prize: int = None
     match_format: str
     winner: str | None = None
-    start_date: Optional[date] = None
+    start_date: Optional[datetime] = None
     matches: list[MatchesResponseMod] | None = None
     
 
