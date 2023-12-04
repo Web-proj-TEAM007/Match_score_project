@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, Match, NewPhase
+from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, TournamentsAllResponseMod
 import random
 from common.validators import tournament_format_validator
 from common.exceptions import BadRequest, NotFound
@@ -10,8 +10,9 @@ from datetime import date
 from common.validators import _MATCH_PHASES, validate_match_date
 
 
+
 def get_all_tournaments(title, tour_format):
-    query = "SELECT id, title, format, prize, start_date, winner FROM tournaments"
+    query = "SELECT id, title, format, start_date, winner, prize FROM tournaments"
     params = []
     where_clauses = []
     if title:
@@ -23,7 +24,7 @@ def get_all_tournaments(title, tour_format):
     if where_clauses:
         query += " WHERE " + " AND ".join(where_clauses)
     data = read_query(query, params)
-    tournaments = [Tournament.from_query_result(*row) for row in data]
+    tournaments = [TournamentsAllResponseMod.from_query_result(*row) for row in data]
     return tournaments
 
 
