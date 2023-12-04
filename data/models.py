@@ -132,6 +132,25 @@ class Tournament(TournamentBase):
                    )
 
 
+class TournamentsAllResponseMod(BaseModel):
+    id: int
+    title: str
+    tour_format: str
+    start_date: date
+    winner: str
+    prize: int
+
+    @classmethod
+    def from_query_result(cls, id, title, tour_format, 
+                          start_date, winner, prize):
+        return cls(id=id,
+                   title=title,
+                   tour_format=tour_format.capitalize(),
+                   start_date=start_date,
+                   winner=winner,
+                   prize=prize)
+
+
 class TournamentCreateModel(TournamentBase):
     start_date: date
 
