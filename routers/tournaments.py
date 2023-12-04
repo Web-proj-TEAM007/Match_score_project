@@ -16,13 +16,13 @@ def get_all_tournaments(title: str = Query(None, description="Get tournament by 
     """You can get all upcoming tournaments, optional filter features"""
     tournaments = tournaments_service.get_all_tournaments(title, tournament_format)
     if not tournaments:
-        return Response(status_code=204, headers={'detail': 'No available tournaments'})
+        raise NotFound('Tournament not found.')
     # ---------------- Add all matches for the specific tournament -------------------
-    for tournament in tournaments:
-        tournament.matches = match_service.get_matches_for_tournament(tournament.id)
-        tournament.participants = tournaments_service.get_tournament_participants(tournament.id)
-        if tournament.matches:
-            tournament.match_format = tournament.matches[0].format
+    # for tournament in tournaments:
+    #     tournament.matches = match_service.get_matches_for_tournament(tournament.id)
+    #     tournament.participants = tournaments_service.get_tournament_participants(tournament.id)
+    #     if tournament.matches:
+    #         tournament.match_format = tournament.matches[0].format
     return tournaments
 
 
