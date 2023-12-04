@@ -264,6 +264,17 @@ def get_matches_for_tournament(tournament_id: int) -> list[Match]:
     return result
 
 
+def get_matches_by_tournament_v2(tournament_id: int) -> list[tuple]:
+    
+    data = read_query('''SELECT mp.matches_id, pp.full_name, mp.score, m.date, t.title 
+                            FROM matches_has_players_profiles mp
+                            JOIN matches m ON m.id = mp.matches_id
+                            JOIN players_profiles pp ON pp.id = mp.player_profile_id
+                            JOIN tournaments t ON m.tournament_id = t.id
+                            WHERE t.id = ?''', (tournament_id,))
+    return packaging_for_all_matches(data)
+
+
 def match_exists(match_id: int) -> bool:
     return any(
         read_query(
@@ -430,6 +441,12 @@ def paginating_matches(page: int,
 
 
 def packaging_for_all_matches(data: list) -> list[MatchesResponseMod]:
+    '''Argument example for ONE match :
+    [
+        (match_id, full_name, score, date, title),
+        (match_id, full_name, score, date, title)
+    ]'''
+
     all_matches = []
     index = 0
     while index < (len(data) - 1):
