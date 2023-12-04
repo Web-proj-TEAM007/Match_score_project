@@ -187,7 +187,7 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
                 return create_winner_response(player2_id, tournament.id)
             last_phase = tournaments_service.check_if_knockout_phase_is_over(tournament)
             if last_phase:
-                tournaments_service.move_phase(tournament.id, last_phase)
+                tournaments_service.move_phase(tournament.id, last_phase[-1])
         elif player2_score == player1_score:
             update_player_score(match_id, player2_id, player2_score)
             update_player_score(match_id, player1_id, player1_score)
@@ -262,6 +262,17 @@ def get_matches_for_tournament(tournament_id: int) -> list[Match]:
     data = read_query('''SELECT * FROM matches WHERE tournament_id = ?''', (tournament_id,))
     result = [Match.from_query_result(*row) for row in data]
     return result
+
+
+def get_matches_by_tournament_v2(tournament_id: int) -> list[tuple]:
+    
+    data = read_query('''SELECT mp.matches_id, pp.full_name, mp.score, m.date, t.title 
+                            FROM matches_has_players_profiles mp
+                            JOIN matches m ON m.id = mp.matches_id
+                            JOIN players_profiles pp ON pp.id = mp.player_profile_id
+                            JOIN tournaments t ON m.tournament_id = t.id
+                            WHERE t.id = ?''', (tournament_id,))
+    return packaging_for_all_matches(data)
 
 
 def match_exists(match_id: int) -> bool:
@@ -430,6 +441,12 @@ def paginating_matches(page: int,
 
 
 def packaging_for_all_matches(data: list) -> list[MatchesResponseMod]:
+    '''Argument example for ONE match :
+    [
+        (match_id, full_name, score, date, title),
+        (match_id, full_name, score, date, title)
+    ]'''
+
     all_matches = []
     index = 0
     while index < (len(data) - 1):
