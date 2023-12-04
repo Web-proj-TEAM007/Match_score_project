@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, TournamentsAllResponseMod
+from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, TournamentsAllResponseMod, TournamentByIDRespModel
 import random
 from common.validators import tournament_format_validator
 from common.exceptions import BadRequest, NotFound
@@ -38,6 +38,15 @@ def get_tournament_by_id(tour_id: int) -> Tournament:
         tournament.match_format = tournament.matches[-1].format if tournament.matches else 'No matches'
     return tournament
 
+def get_tournament_by_id_v2(tour_id: int) -> TournamentByIDRespModel:
+    data = read_query('''SELECT t.id, t.title, t.format, t.prize, m.format, t.winner, t.start_date 
+                        FROM tournaments t
+                        JOIN matches m ON m.tournament_id = t.id
+                        WHERE t.id = ?''', (tour_id,))
+    tournament = next((TournamentByIDRespModel.from_query_result(*row) for row in data), None)
+    if tournament:
+        tournament.matches = match_service.get_matches_by_tournament_v2(tournament.id)
+    return tournament
 
 def create_tournament(tournament: TournamentCreateModel) -> Tournament:
     generated_id = insert_query("INSERT INTO tournaments (format, title, prize, start_date) VALUES (?, ?, ?, ?)",
