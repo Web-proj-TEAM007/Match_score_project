@@ -53,7 +53,7 @@ def create_tournament(tournament: TournamentCreateModel, token: str = Depends(JW
 
 @tournaments_router.get("/{id}", tags=['Tournaments'])
 def get_tournament_by_id(tournament_id: int = Query(..., description='Enter desired tournament id')):
-    tournament = tournaments_service.get_tournament_by_id(tournament_id)
+    tournament = tournaments_service.get_tournament_by_id_v2(tournament_id)
     if not tournament:
         raise NotFound(detail='No such tournament')
     if not tournament.start_date:
@@ -81,7 +81,7 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
 
 
 @tournaments_router.patch("/participants/{tour_id}", tags=['Tournaments'])
-def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'),
+def manage_participants(tour_id: int = Path(..., description='Enter tournament id'),
                       update_participants: UpdateParticipantModel = Body(None,
                                                                          description='Update participants'),
                       token: str = Depends(JWTBearer())):
