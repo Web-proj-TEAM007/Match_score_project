@@ -289,7 +289,7 @@ def get_matches_for_tournament(tournament_id: int) -> list[Match]:
     return result
 
 
-def get_matches_by_tournament_v2(tournament_id: int) -> list[tuple]:
+def get_matches_by_tournament_v2(tournament_id: int) -> list[MatchesResponseMod]:
     data = read_query('''SELECT mp.matches_id, pp.full_name, mp.score, m.date, t.title 
                             FROM matches_has_players_profiles mp
                             JOIN matches m ON m.id = mp.matches_id
