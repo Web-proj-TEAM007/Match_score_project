@@ -209,8 +209,10 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
                 tournaments_service.move_phase(tournament.id, last_phase[-1])
 
         elif player2_score == player1_score:
-            update_player_score(match_id, player2_id, player2_score)
-            update_player_score(match_id, player1_id, player1_score)
+            # update_player_score(match_id, player2_id, player2_score)
+            # update_player_score(match_id, player1_id, player1_score)
+            # когато мачът не е равен и при последното въвеждане на разултат става равен и 
+            # се посочи край на мача, събира сегашните точки в базата + подадените точки и скора става Марс.
             raise BadRequest(detail='Knockout matches cannot end draw, please try again.')
     elif play_format.capitalize() == 'League':
         if player1_score > player2_score:
