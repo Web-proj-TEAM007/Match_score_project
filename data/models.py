@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, constr
 from typing import Optional
-from common.validators import tournament_format_validator, match_format_validator, check_date
+from common.validators import tournament_format_validator, match_format_validator, check_date, check_if_num
 from datetime import datetime
 from datetime import date
 
@@ -269,3 +269,16 @@ class Notify_player(BaseModel):
 class Director_promotion(BaseModel):
     user_id: int
     approved: int
+
+class LeagueRankingResponse(BaseModel):
+    pl_id: int
+    name: str
+    tournament_title: str
+    points: int | object
+
+    @classmethod
+    def from_query_result(cls, pl_id, name, tournament_title, points):
+        return cls(pl_id=pl_id,
+                   name=name,
+                   tournament_title=tournament_title,
+                   points=check_if_num(points))

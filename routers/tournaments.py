@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Depends, Path, Body, Response
 from data.models import UpdateParticipantModel, TournamentCreateModel
 from common.validators import tournament_format_validator, validate_tournament_start_date
-from common.exceptions import NotFound, Unauthorized
+from common.exceptions import NotFound, Unauthorized, BadRequest
 from services import tournaments_service, match_service, user_service, player_service
 from authentication.jwt_bearer import JWTBearer
 from authentication.auth import get_user_from_token
@@ -25,6 +25,18 @@ def get_all_tournaments(title: str = Query(None, description="Get tournament by 
     #         tournament.match_format = tournament.matches[0].format
     return tournaments
 
+@tournaments_router.get("/league-ranking/{tournament_id}", tags=['Tournaments'])
+def get_league_ranking(tournament_id: int):
+
+    tournament = tournaments_service.get_tournament_by_id(tournament_id)
+
+    if not tournament:
+        raise NotFound(f'Tournament #{tournament_id} not found.')
+
+    if tournament.tour_format.lower() != 'league':
+        raise BadRequest('Currently ranking is available only for League format.')
+    
+    return tournaments_service.get_ranking_league(tournament_id)
 
 @tournaments_router.post("/", tags=['Tournaments'])
 def create_tournament(tournament: TournamentCreateModel, token: str = Depends(JWTBearer())):

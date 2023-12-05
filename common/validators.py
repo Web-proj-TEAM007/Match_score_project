@@ -70,3 +70,10 @@ def validate_match_date(match, new_date: date):
         return new_date
     else:
         return match.date
+
+def check_if_num(entry: int | None):
+    if entry:
+        entry = int(entry)
+        return entry
+    else:
+        return 0
