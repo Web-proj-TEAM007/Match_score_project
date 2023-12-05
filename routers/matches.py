@@ -49,7 +49,7 @@ def get_matches_by_tournament(tourn_id: int):
     if not ans:
         raise NotFound(f'Tournament #{tourn_id} not found.')
 
-    return match_service.get_matches_for_tournament(tourn_id)
+    return match_service.get_matches_by_tournament_v2(tourn_id)
 
 @match_router.put('/{match_id}', tags=['Matches'])
 def set_match_score(match_id: int, match_score: SetMatchScoreMod, token: str = Depends(JWTBearer())):
