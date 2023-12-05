@@ -138,10 +138,15 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
     if match_format.lower() == 'score limited' and (player1_last_result >= value or player2_last_result >= value):
         result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id, player1_last_result,
                                     pl_2_id, player2_last_result)
+        
+        player_service.updating_player_opponents(pl_1_id)
+        player_service.updating_player_opponents(pl_2_id)
         return result if result else Response(status_code=200, content=f'Score limit reached: {value}')
     elif match_format.lower() == 'time limited' and time_limit_validator(match.date, value):
         result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id, player1_last_result,
                                     pl_2_id, player2_last_result)
+        player_service.updating_player_opponents(pl_1_id)
+        player_service.updating_player_opponents(pl_2_id)
         return result if result else Response(status_code=200, content=f'Time limit reached: {value}')
         # Need additional return, most likely the match final result
 
@@ -155,13 +160,17 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
     elif match_status:
         result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id,
                                     player1_last_result, pl_2_id, player2_last_result)
+        player_service.updating_player_opponents(pl_1_id)
+        player_service.updating_player_opponents(pl_2_id)
         return result if result else Response(status_code=200, content='Score changed successfully')
     # TODO: Proper return with response models when there is a winner, not only when it's final
 
 
 def update_winner_info(play_format: str, tournament: Tournament, match_id: int, player1_id: int,
                        player1_score: int, player2_id: int, player2_score: int) -> None | WinnerResponseMode | Response:
+
     is_final = check_if_match_final(match_id)
+
     if play_format.capitalize() == 'Knockout':
         if player1_score > player2_score:
             update_query('''UPDATE matches_has_players_profiles
@@ -172,8 +181,6 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
                             WHERE matches_id = ? and player_profile_id = ?''', (player2_score, match_id, player2_id))
             player_service.update_player_stat_matches(player1_id, True)
             player_service.update_player_stat_matches(player2_id, False)
-            player_service.updating_player_opponents(player1_id)
-            player_service.updating_player_opponents(player2_id)
 
             if is_final:
                 player_service.update_player_stat_tourn(player2_id, True)
@@ -181,6 +188,7 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
             last_phase = tournaments_service.check_if_knockout_phase_is_over(tournament)
             if last_phase:
                 tournaments_service.move_phase(tournament.id, last_phase[1])
+
         elif player2_score > player1_score:
             update_query('''UPDATE matches_has_players_profiles
                                        SET score = ?, win = 1
@@ -192,8 +200,6 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
                          (player1_score, match_id, player1_id))
             player_service.update_player_stat_matches(player2_id, True)
             player_service.update_player_stat_matches(player1_id, False)
-            player_service.updating_player_opponents(player1_id)
-            player_service.updating_player_opponents(player2_id)
 
             if is_final:
                 player_service.update_player_stat_tourn(player2_id, True)
@@ -201,10 +207,11 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
             last_phase = tournaments_service.check_if_knockout_phase_is_over(tournament)
             if last_phase:
                 tournaments_service.move_phase(tournament.id, last_phase[-1])
+
         elif player2_score == player1_score:
             update_player_score(match_id, player2_id, player2_score)
             update_player_score(match_id, player1_id, player1_score)
-            raise BadRequest(detail='Knockout matches cannot end draw')
+            raise BadRequest(detail='Knockout matches cannot end draw, please try again.')
     elif play_format.capitalize() == 'League':
         if player1_score > player2_score:
             update_query('''UPDATE matches_has_players_profiles
@@ -218,12 +225,11 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
             player_service.update_player_stat_matches(player1_id, True)
             player_service.update_player_stat_matches(player2_id, False)
             winner = tournaments_service.check_if_league_is_over(tournament.id)
-            player_service.updating_player_opponents(player1_id)
-            player_service.updating_player_opponents(player2_id)
 
             if winner:
                 player_service.update_player_stat_tourn(winner, True)
                 return create_winner_response(winner, tournament.id)
+            
         elif player2_score > player1_score:
             update_query('''UPDATE matches_has_players_profiles
                                            SET score = ?, win = 1, pts = 2
@@ -236,12 +242,10 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
             player_service.update_player_stat_matches(player2_id, True)
             player_service.update_player_stat_matches(player1_id, False)
             winner = tournaments_service.check_if_league_is_over(tournament.id)
-            player_service.updating_player_opponents(player1_id)
-            player_service.updating_player_opponents(player2_id)
-
             if winner:
                 player_service.update_player_stat_tourn(winner, True)
                 return create_winner_response(winner, tournament.id)
+            
         elif player2_score == player1_score:
             update_query('''UPDATE matches_has_players_profiles
                                                            SET score = ?, win = 0, pts = 1
@@ -251,8 +255,7 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
                                                            SET score = ?, win = 0, pts = 1
                                                           WHERE matches_id = ? and player_profile_id = ?''',
                          (player2_score, match_id, player2_id))
-            player_service.updating_player_opponents(player1_id)
-            player_service.updating_player_opponents(player2_id)
+            player_service.upd_player_stat_match_when_even(player1_id, player2_id)
 
 
 
