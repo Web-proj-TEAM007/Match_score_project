@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, TournamentsAllResponseMod, TournamentByIDRespModel
+from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, TournamentsAllResponseMod, TournamentByIDRespModel, LeagueRankingResponse
 import random
 from common.validators import tournament_format_validator
 from common.exceptions import BadRequest, NotFound
@@ -204,3 +204,16 @@ def validate_participants(tournament, update_participants):
         raise BadRequest(f'Player: {update_participants.new_player} already in the tournament')
     if not new_player:
         _ = user_service.create_player_statistic(user_service.create_player_profile(update_participants.new_player))
+
+
+def get_ranking_league(tournament_id: int):
+
+    data = read_query('''SELECT pp.id, pp.full_name, t.title, SUM(mp.pts) as points FROM players_profiles pp
+                        JOIN tournaments t ON t.id = ?
+                        JOIN matches m ON m.tournament_id = t.id
+                        JOIN matches_has_players_profiles mp ON mp.matches_id = m.id
+                        WHERE pp.id = mp.player_profile_id
+                        GROUP BY pp.id 
+                        ORDER BY Points desc''', (tournament_id,))
+
+    return (LeagueRankingResponse.from_query_result(*row) for row in data)
