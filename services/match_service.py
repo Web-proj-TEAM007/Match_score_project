@@ -255,7 +255,7 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
                                                            SET score = ?, win = 0, pts = 1
                                                           WHERE matches_id = ? and player_profile_id = ?''',
                          (player2_score, match_id, player2_id))
-            player_service.upd_player_stat_match_when_even(player1_id, player2_id)
+            player_service.upd_player_stat_match_when_draw(player1_id, player2_id)
 
 
 
