@@ -128,12 +128,11 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
         raise BadRequest(detail="Set match start date first")
     if datetime.now() < match.date:
         raise BadRequest(detail="Match score cannot be changed before the match has been started")
-    elif match_format == 'Score Limited' and (player1_last_result >= value or player2_last_result >= value):
+    if match_format.lower() == 'score limited' and (player1_last_result >= value or player2_last_result >= value):
         result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id, player1_last_result,
                                     pl_2_id, player2_last_result)
         return result if result else Response(status_code=200, content=f'Score limit reached: {value}')
-        # Need additional return, most likely the match final result
-    elif match_format == 'Time Limited' and time_limit_validator(match.date, value):
+    elif match_format.lower() == 'time limited' and time_limit_validator(match.date, value):
         result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id, player1_last_result,
                                     pl_2_id, player2_last_result)
         return result if result else Response(status_code=200, content=f'Time limit reached: {value}')
@@ -265,7 +264,6 @@ def get_matches_for_tournament(tournament_id: int) -> list[Match]:
 
 
 def get_matches_by_tournament_v2(tournament_id: int) -> list[tuple]:
-    
     data = read_query('''SELECT mp.matches_id, pp.full_name, mp.score, m.date, t.title 
                             FROM matches_has_players_profiles mp
                             JOIN matches m ON m.id = mp.matches_id
@@ -344,16 +342,15 @@ def update_participants_for_matches(tournament, old_player, new_player):
                 "player_profile_id = ?",
                 (new_player.id, match_id, old_player.id))
             update_query(
-            "UPDATE tournaments_has_players_profiles SET player_profile_id = ? WHERE tournament_id = ? AND "
-            "player_profile_id = ?",
-            (new_player.id, tournament.id, old_player.id))
+                "UPDATE tournaments_has_players_profiles SET player_profile_id = ? WHERE tournament_id = ? AND "
+                "player_profile_id = ?",
+                (new_player.id, tournament.id, old_player.id))
             return True
     update_query(
         "UPDATE tournaments_has_players_profiles SET player_profile_id = ? WHERE tournament_id = ? AND "
         "player_profile_id = ?",
         (new_player.id, tournament.id, old_player.id))
     return False
-
 
 
 def check_if_match_final(match_id: int) -> bool:

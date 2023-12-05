@@ -89,8 +89,8 @@ def manage_tournament(tournament, new_date: date | None, change_participants: Up
     if change_participants:
         new_player = user_service.get_player_profile_by_fullname(change_participants.new_player)
         old_player = user_service.get_player_profile_by_fullname(change_participants.old_player)
-        tournament.participants.remove(old_player)
-        tournament.participants.append(new_player)
+        tournament.participants.remove(old_player.full_name)
+        tournament.participants.append(new_player.full_name)
         if match_service.update_participants_for_matches(tournament, old_player, new_player):
             return Response(status_code=200, content=f'Successfully changed tournament participant: '
                                                               f'{old_player.full_name} with {new_player.full_name} '
@@ -197,10 +197,10 @@ def move_phase(tournament_id: int, current_phase: str):
 
 
 def validate_participants(tournament, update_participants):
+    if update_participants.old_player not in tournament.participants:
+        raise NotFound(f'Player: {update_participants.old_player} is not part of the tournament participants')
     new_player = user_service.get_player_profile_by_fullname(update_participants.new_player)
     if new_player in tournament.participants:
         raise BadRequest(f'Player: {update_participants.new_player} already in the tournament')
     if not new_player:
         _ = user_service.create_player_statistic(user_service.create_player_profile(update_participants.new_player))
-    if not any(player.full_name == update_participants.old_player for player in tournament.participants):
-        raise NotFound(f'Player: {update_participants.old_player} is not part of the tournament participants')
