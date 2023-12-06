@@ -96,7 +96,7 @@ def create_matches(tournament: Tournament, players: list[list[str]] | tuple) -> 
         this_match = MatchTournResponseMod(id=match_id,
                                            player_1=player1,
                                            player_2=player2,
-                                           date='Not set yet')
+                                           date=tournament.start_date)
         matches.append(this_match)
     return matches
 
@@ -118,12 +118,12 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
     tournament = tournaments_service.get_tournament_by_id(match.tourn_id)
     if not tournament:
         raise BadRequest(detail='Invalid tournament ID')
-    
+
     match_format, value = separate_match_format(match)
 
     if is_match_finished(match.id):
         raise BadRequest(detail='The match has already been finished')
-    
+
     match_status = match_score.match_finished
 
     player1_current_score, player2_current_score = get_players_current_score(match.id, pl_1_id, pl_2_id)
@@ -134,21 +134,37 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
         raise BadRequest(detail="Set match start date first")
     if datetime.now() < match.date:
         raise BadRequest(detail="Match score cannot be changed before the match has been started")
-    
+
     if match_format.lower() == 'score limited' and (player1_last_result >= value or player2_last_result >= value):
         result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id, player1_last_result,
                                     pl_2_id, player2_last_result)
-        
+
         player_service.updating_player_opponents(pl_1_id)
         player_service.updating_player_opponents(pl_2_id)
-        return result if result else Response(status_code=200, content=f'Score limit reached: {value}')
+        winner_id = player_service.get_match_winner(match.id)
+        if len(winner_id) == 1:
+            match_winner = user_service.get_player_profile_by_id(winner_id[0][0])
+            return result if result else Response(status_code=200, content=f'Match finished - Score limit reached: {value},'
+                                                                       f' player with more points win :'
+                                                                       f'{match_winner.full_name}')
+        else:
+            return result if result else Response(status_code=200,
+                                                      content=f'Match finished draw- Score limit reached: {value}')
     elif match_format.lower() == 'time limited' and time_limit_validator(match.date, value):
         result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id, player1_last_result,
                                     pl_2_id, player2_last_result)
         player_service.updating_player_opponents(pl_1_id)
         player_service.updating_player_opponents(pl_2_id)
-        return result if result else Response(status_code=200, content=f'Time limit reached: {value}')
-        # Need additional return, most likely the match final result
+        winner_id = player_service.get_match_winner(match.id)
+        if len(winner_id) == 1:
+            match_winner = user_service.get_player_profile_by_id(winner_id[0][0])
+            return result if result else Response(status_code=200,
+                                                  content=f'Match finished - Time limit reached: {value},'
+                                                          f' player with more points win :'
+                                                          f'{match_winner.full_name}')
+        else:
+            return result if result else Response(status_code=200,
+                                                  content=f'Match finished draw- Time limit reached: {value}')
 
     if not match_status:
         update_player_score(match.id, pl_1_id, pl_1_score)
@@ -162,8 +178,14 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
                                     player1_last_result, pl_2_id, player2_last_result)
         player_service.updating_player_opponents(pl_1_id)
         player_service.updating_player_opponents(pl_2_id)
-        return result if result else Response(status_code=200, content='Score changed successfully')
-    # TODO: Proper return with response models when there is a winner, not only when it's final
+        winner_id = player_service.get_match_winner(match.id)
+        if len(winner_id) == 1:
+            match_winner = user_service.get_player_profile_by_id(winner_id[0][0])
+            return result if result else Response(status_code=200,
+                                                  content=f'Match finished, winner is {match_winner.full_name}')
+        else:
+            return result if result else Response(status_code=200,
+                                                  content=f'Match finished draw')
 
 
 def update_winner_info(play_format: str, tournament: Tournament, match_id: int, player1_id: int,
@@ -209,8 +231,10 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
                 tournaments_service.move_phase(tournament.id, last_phase[-1])
 
         elif player2_score == player1_score:
-            update_player_score(match_id, player2_id, player2_score)
-            update_player_score(match_id, player1_id, player1_score)
+            # update_player_score(match_id, player2_id, player2_score)
+            # update_player_score(match_id, player1_id, player1_score)
+            # когато мачът не е равен и при последното въвеждане на разултат става равен и 
+            # се посочи край на мача, събира сегашните точки в базата + подадените точки и скора става Марс.
             raise BadRequest(detail='Knockout matches cannot end draw, please try again.')
     elif play_format.capitalize() == 'League':
         if player1_score > player2_score:
@@ -229,7 +253,7 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
             if winner:
                 player_service.update_player_stat_tourn(winner, True)
                 return create_winner_response(winner, tournament.id)
-            
+
         elif player2_score > player1_score:
             update_query('''UPDATE matches_has_players_profiles
                                            SET score = ?, win = 1, pts = 2
@@ -245,7 +269,7 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
             if winner:
                 player_service.update_player_stat_tourn(winner, True)
                 return create_winner_response(winner, tournament.id)
-            
+
         elif player2_score == player1_score:
             update_query('''UPDATE matches_has_players_profiles
                                                            SET score = ?, win = 0, pts = 1
@@ -256,7 +280,6 @@ def update_winner_info(play_format: str, tournament: Tournament, match_id: int, 
                                                           WHERE matches_id = ? and player_profile_id = ?''',
                          (player2_score, match_id, player2_id))
             player_service.upd_player_stat_match_when_draw(player1_id, player2_id)
-
 
 
 def get_players_current_score(match_id: int, player1_id: int, player2_id: int) -> tuple[int, int]:

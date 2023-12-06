@@ -50,12 +50,15 @@ def update_player_stat_matches(player_id: int, win: bool) -> None | BadRequest:
 
 
 def upd_player_stat_match_when_draw(player_1_id: int, player_2_id: int) -> BadRequest | None:
+    ans_player_1 = update_query('''UPDATE players_statistics 
+                                 SET matches_played = matches_played + 1
+                                 WHERE player_profile_id = ?''', (player_1_id,))
 
-    ans = update_query('''UPDATE players_statistics 
-                       SET matches_played = matches_played + 1
-                       WHERE id = ? or id = ?''', (player_1_id, player_2_id))
-    
-    if not ans:
+    ans_player_2 = update_query('''UPDATE players_statistics 
+                                 SET matches_played = matches_played + 1
+                                 WHERE player_profile_id = ?''', (player_2_id,))
+
+    if not ans_player_1 or not ans_player_2:
         raise BadRequest(f'Updating draw match with players #{player_1_id} and #{player_2_id} went wrong.')
 
 def update_player_stat_tourn(player_id: int, t_win: bool) -> None | BadRequest:
@@ -83,7 +86,8 @@ def updating_player_opponents(player_id: int) -> None:
                             WHERE mp.player_profile_id != ? and ms.matches_id = mp.matches_id 
                                 AND ps.player_profile_id = mp.player_profile_id and pp.id = mp.player_profile_id
                             GROUP BY mp.player_profile_id
-                            ORDER BY (ps.matches_won/ps.matches_played) desc, pp.full_name
+                            ORDER BY (CASE WHEN ps.matches_played > 0 THEN (ps.matches_won/ps.matches_played) ELSE 0 
+                            END) desc, pp.full_name
                             LIMIT 1),
                     worst_opp = (WITH matchesss as
                                     (SELECT matches_id FROM matches_has_players_profiles
@@ -93,7 +97,8 @@ def updating_player_opponents(player_id: int) -> None:
                             WHERE mp.player_profile_id != ? and ms.matches_id = mp.matches_id 
                                 AND ps.player_profile_id = mp.player_profile_id and pp.id = mp.player_profile_id
                             GROUP BY mp.player_profile_id
-                            ORDER BY (ps.matches_won/ps.matches_played) asc, pp.full_name
+                            ORDER BY (CASE WHEN ps.matches_played > 0 THEN (ps.matches_won/ps.matches_played) ELSE 0 
+                            END) asc, pp.full_name
                             LIMIT 1),
                     most_played_opp = (WITH matchessss AS
                                                 (SELECT matches_id FROM matches_has_players_profiles
@@ -105,4 +110,12 @@ def updating_player_opponents(player_id: int) -> None:
                             ORDER BY COUNT(mp.player_profile_id) desc, full_name desc
                             LIMIT 1)
                     WHERE player_profile_id = ?''', (player_id, player_id, player_id, player_id, player_id, player_id, player_id))
+
+
+def get_match_winner(match_id: int) -> list[int] | None:
+    result = read_query('SELECT player_profile_id FROM matches_has_players_profiles WHERE matches_id = ? '
+                        'AND (win = 1 OR win = 0)', (match_id,))
+    return result if result else None
+
+
 
