@@ -50,7 +50,7 @@ def create_tournament(tournament: TournamentCreateModel, token: str = Depends(JW
     player_schema = tournaments_service.generate_knockout_schema(players) \
         if tournament_format_validator(tournament.tour_format) == 'knockout' \
         else tournaments_service.generate_league_schema(players)
-    players_profiles_ids = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
+    players_profiles_ids = [user_service.create_player_statistic(player_service.create_player_profile(name)) for name in
                             tournament.participants if not user_service.player_profile_exists(name)]
     if not players_profiles_ids:
         players_profiles_ids = [user_service.get_player_profile_by_fullname(name).id for name in tournament.participants]

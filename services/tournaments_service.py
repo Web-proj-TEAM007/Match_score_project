@@ -205,7 +205,7 @@ def validate_participants(tournament, update_participants):
         raise BadRequest(f'Player: {update_participants.new_player} already in the tournament')
     if not new_player:
         new_player_profile_id = (user_service.create_player_statistic
-                                 (user_service.create_player_profile(update_participants.new_player)))
+                                 (player_service.create_player_profile(update_participants.new_player)))
         player_service.update_player_stat_tourn(new_player_profile_id, False)
 
 
