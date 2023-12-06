@@ -3,7 +3,6 @@ from authentication.jwt_handler import sign_jwt
 from data.database import insert_query, read_query, update_query
 from common.exceptions import BadRequest
 from data.models import User, Player
-from typing import Optional
 from fastapi import Response
 
 
@@ -109,14 +108,6 @@ def check_if_player_have_assigned_matches(tournament, player) -> list[int]:
                      FROM matches WHERE matches.tournament_id = ?) AND 
                      matches_has_players_profiles.player_profile_id = ?''', (tournament.id, player.id))
     return data
-
-
-def create_player_profile(full_name: str, country: Optional[str] = None,  sport_club: Optional[str] = None):
-    generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club) VALUES(?,?,?)''',
-                                (full_name, country, sport_club))
-    player = Player(full_name=full_name, country=country, sport_club=sport_club)
-    player.id = generated_id
-    return player
 
 
 def is_user_linked_to_a_profile(user) -> bool:

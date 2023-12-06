@@ -4,7 +4,7 @@ import random
 from common.validators import tournament_format_validator
 from common.exceptions import BadRequest, NotFound
 from fastapi import Response
-from services import user_service, match_service
+from services import user_service, match_service, player_service
 import itertools
 from datetime import date
 from common.validators import _MATCH_PHASES, validate_match_date
@@ -59,7 +59,8 @@ def create_tournament(tournament: TournamentCreateModel) -> Tournament:
         prize=tournament.prize,
         match_format=tournament.match_format,
         participants=tournament.participants,
-        start_date=tournament.start_date
+        start_date=tournament.start_date,
+        winner='Awaiting winner'
     )
 
 
@@ -203,7 +204,10 @@ def validate_participants(tournament, update_participants):
     if new_player in tournament.participants:
         raise BadRequest(f'Player: {update_participants.new_player} already in the tournament')
     if not new_player:
-        _ = user_service.create_player_statistic(user_service.create_player_profile(update_participants.new_player))
+        new_player_profile_id = (user_service.create_player_statistic
+                                 (player_service.create_player_profile(update_participants.new_player)))
+        player_service.update_player_stat_tourn(new_player_profile_id, False)
+
 
 
 def get_ranking_league(tournament_id: int):
@@ -217,3 +221,8 @@ def get_ranking_league(tournament_id: int):
                         ORDER BY Points desc''', (tournament_id,))
 
     return (LeagueRankingResponse.from_query_result(*row) for row in data)
+
+
+def is_tournament_over(tournament_id: int) -> bool:
+    winner = read_query('SELECT winner FROM tournaments WHERE id = ?', (tournament_id,))
+    return True if winner != 'Awaiting winner' else False

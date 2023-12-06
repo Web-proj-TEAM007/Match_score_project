@@ -50,7 +50,7 @@ def create_tournament(tournament: TournamentCreateModel, token: str = Depends(JW
     player_schema = tournaments_service.generate_knockout_schema(players) \
         if tournament_format_validator(tournament.tour_format) == 'knockout' \
         else tournaments_service.generate_league_schema(players)
-    players_profiles_ids = [user_service.create_player_statistic(user_service.create_player_profile(name)) for name in
+    players_profiles_ids = [user_service.create_player_statistic(player_service.create_player_profile(name)) for name in
                             tournament.participants if not user_service.player_profile_exists(name)]
     if not players_profiles_ids:
         players_profiles_ids = [user_service.get_player_profile_by_fullname(name).id for name in tournament.participants]
@@ -85,6 +85,8 @@ def manage_tournament(tour_id: int = Path(..., description='Enter tournament id'
     tournament = tournaments_service.get_tournament_by_id(tour_id)
     if not tournament:
         raise NotFound(f'Tournament with id: {tour_id}, does not exist.')
+    if tournaments_service.is_tournament_over(tournament.id):
+        raise BadRequest(detail='Tournament is over.')
     if change_tournament_start_date:
         if tournament.start_date:
             validate_tournament_start_date(tournament.start_date, change_tournament_start_date)
@@ -104,6 +106,8 @@ def manage_participants(tour_id: int = Path(..., description='Enter tournament i
     tournament = tournaments_service.get_tournament_by_id(tour_id)
     if not tournament:
         raise NotFound(f'Tournament with id: {tour_id}, does not exist.')
+    if tournaments_service.is_tournament_over(tournament.id):
+        raise BadRequest(detail='Tournament is over.')
     if update_participants:
         tournaments_service.validate_participants(tournament, update_participants)
     result = tournaments_service.manage_tournament(tournament, None, update_participants)
