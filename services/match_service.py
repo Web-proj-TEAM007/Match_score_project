@@ -142,19 +142,29 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
         player_service.updating_player_opponents(pl_1_id)
         player_service.updating_player_opponents(pl_2_id)
         winner_id = player_service.get_match_winner(match.id)
-        winner = user_service.get_player_profile_by_id(winner_id)
-        return result if result else Response(status_code=200, content=f'Match finished - Score limit reached: {value},'
+        if len(winner_id) == 1:
+            match_winner = user_service.get_player_profile_by_id(winner_id[0][0])
+            return result if result else Response(status_code=200, content=f'Match finished - Score limit reached: {value},'
                                                                        f' player with more points win :'
-                                                                       f'{winner.full_name}')
+                                                                       f'{match_winner.full_name}')
+        else:
+            return result if result else Response(status_code=200,
+                                                      content=f'Match finished draw- Score limit reached: {value}')
     elif match_format.lower() == 'time limited' and time_limit_validator(match.date, value):
         result = update_winner_info(tournament.tour_format, tournament, match.id, pl_1_id, player1_last_result,
                                     pl_2_id, player2_last_result)
         player_service.updating_player_opponents(pl_1_id)
         player_service.updating_player_opponents(pl_2_id)
         winner_id = player_service.get_match_winner(match.id)
-        winner = user_service.get_player_profile_by_id(winner_id)
-        return result if result else Response(status_code=200, content=f'Match finished - Time limit reached: {value}, '
-                                                                      f'player with more points win :{winner.full_name}')
+        if len(winner_id) == 1:
+            match_winner = user_service.get_player_profile_by_id(winner_id[0][0])
+            return result if result else Response(status_code=200,
+                                                  content=f'Match finished - Time limit reached: {value},'
+                                                          f' player with more points win :'
+                                                          f'{match_winner.full_name}')
+        else:
+            return result if result else Response(status_code=200,
+                                                  content=f'Match finished draw- Time limit reached: {value}')
 
     if not match_status:
         update_player_score(match.id, pl_1_id, pl_1_score)
@@ -169,8 +179,13 @@ def change_match_score(pl_1_id, pl_2_id, match: Match, match_score: SetMatchScor
         player_service.updating_player_opponents(pl_1_id)
         player_service.updating_player_opponents(pl_2_id)
         winner_id = player_service.get_match_winner(match.id)
-        winner = user_service.get_player_profile_by_id(winner_id)
-        return result if result else f'Match with ID {match.id} is won by {winner.full_name}'
+        if len(winner_id) == 1:
+            match_winner = user_service.get_player_profile_by_id(winner_id[0][0])
+            return result if result else Response(status_code=200,
+                                                  content=f'Match finished, winner is {match_winner.full_name}')
+        else:
+            return result if result else Response(status_code=200,
+                                                  content=f'Match finished draw')
 
 
 def update_winner_info(play_format: str, tournament: Tournament, match_id: int, player1_id: int,
