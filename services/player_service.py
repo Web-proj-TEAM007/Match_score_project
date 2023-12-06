@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import PlayerStatistics
+from data.models import PlayerStatistics, Player
 from common.validators import form_ratio
 from common.exceptions import BadRequest
 
@@ -118,4 +118,9 @@ def get_match_winner(match_id: int) -> list[int] | None:
     return result if result else None
 
 
-
+def create_player_profile(full_name: str, country: str | None = None,  sport_club: str | None = None):
+    generated_id = insert_query('''INSERT INTO players_profiles(full_name, country, club) VALUES(?,?,?)''',
+                                (full_name, country, sport_club))
+    player = Player(full_name=full_name, country=country, sport_club=sport_club)
+    player.id = generated_id
+    return player
