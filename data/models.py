@@ -282,3 +282,9 @@ class LeagueRankingResponse(BaseModel):
                    name=name,
                    tournament_title=tournament_title,
                    points=check_if_num(points))
+
+class PlayerEdit(BaseModel):
+    new_name: str
+    new_country: str
+    new_club: str
+
