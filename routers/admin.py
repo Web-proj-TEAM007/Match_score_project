@@ -48,40 +48,40 @@ def link_profile(data: Link_profile,
 
 
 
-@admin_router.post('/send_notification_player', tags=['Admin'])
-def send_notification_player(data: Player_Director_ApproveMailer, token: str = Depends(JWTBearer())):
-    '''Send notification to player that his request is accepted or denied'''
-    user = get_user_from_token(token)
-    admin_service.send_email_player(data.email, data.approval, user.user_role)
-    return JSONResponse(status_code=200, content={'message': "Notification sent!"})
+# @admin_router.post('/send_notification_player', tags=['Admin'])
+# def send_notification_player(data: Player_Director_ApproveMailer, token: str = Depends(JWTBearer())):
+#     '''Send notification to player that his request is accepted or denied'''
+#     user = get_user_from_token(token)
+#     admin_service.send_email_player(data.email, data.approval, user.user_role)
+#     return JSONResponse(status_code=200, content={'message': "Notification sent!"})
 
 
 
-@admin_router.post('/send_notification_director', tags=['Admin'])
-def send_notification_director(data: Player_Director_ApproveMailer, token: str = Depends(JWTBearer())):
-    '''Send notification to a user that his request is accepted or denied'''
-    user = get_user_from_token(token)
-    admin_service.send_email_director(data.email, data.approval, user.user_role)
-    return JSONResponse(status_code=200, content={'message': "Notification sent!"})
+# @admin_router.post('/send_notification_director', tags=['Admin'])
+# def send_notification_director(data: Player_Director_ApproveMailer, token: str = Depends(JWTBearer())):
+#     '''Send notification to a user that his request is accepted or denied'''
+#     user = get_user_from_token(token)
+#     admin_service.send_email_director(data.email, data.approval, user.user_role)
+#     return JSONResponse(status_code=200, content={'message': "Notification sent!"})
 
 
 
 
-@admin_router.post('/tournament-join-alert', tags=['Admin'])
-def tournament_join_alert(data: Notify_player, token: str = Depends(JWTBearer())):
-    '''Send notification to a player that he is added to a tournament'''
-    user = get_user_from_token(token)
-    admin_service.tournament_entry_notification(data.email, user.user_role)
-    return JSONResponse(status_code=200, content={'message': "Notification sent!"})
+# @admin_router.post('/tournament-join-alert', tags=['Admin'])
+# def tournament_join_alert(data: Notify_player, token: str = Depends(JWTBearer())):
+#     '''Send notification to a player that he is added to a tournament'''
+#     user = get_user_from_token(token)
+#     admin_service.tournament_entry_notification(data.email, user.user_role)
+#     return JSONResponse(status_code=200, content={'message': "Notification sent!"})
 
 
 
-@admin_router.post('/player-added-alert', tags=['Admin'])
-def player_added_alert(data: Notify_player, token: str = Depends(JWTBearer())):
-    '''Send notification to a player that he is added to a match'''
-    user = get_user_from_token(token)
-    admin_service.match_entry_notification(data.email, user.user_role)
-    return JSONResponse(status_code=200, content={'message': "Notification sent!"})
+# @admin_router.post('/player-added-alert', tags=['Admin'])
+# def player_added_alert(data: Notify_player, token: str = Depends(JWTBearer())):
+#     '''Send notification to a player that he is added to a match'''
+#     user = get_user_from_token(token)
+#     admin_service.match_entry_notification(data.email, user.user_role)
+#     return JSONResponse(status_code=200, content={'message': "Notification sent!"})
 
 
 @admin_router.put('/{user_id}', tags=['Admin'])
