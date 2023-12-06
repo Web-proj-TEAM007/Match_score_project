@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import PlayerStatistics, Player
+from data.models import PlayerStatistics, Player, PlayerEdit, User
 from common.validators import form_ratio
 from common.exceptions import BadRequest
 
@@ -124,3 +124,24 @@ def create_player_profile(full_name: str, country: str | None = None,  sport_clu
     player = Player(full_name=full_name, country=country, sport_club=sport_club)
     player.id = generated_id
     return player
+
+def edit_player(player_id: int, new_player: PlayerEdit) -> None:
+
+    update_query('''UPDATE players_profiles 
+                    SET full_name = ?, country = ?, club = ?
+                    WHERE id = ? ''',
+                        (new_player.new_name, new_player.new_country, 
+                         new_player.new_club, player_id))
+
+def check_player_linked(player_id: int) -> bool:
+
+    return any(
+        read_query('''SELECT 1 FROM users
+                   WHERE player_profile_id = ? ''', (player_id,)))
+
+def user_is_player(user_id: int, player_id: int):
+
+    return any(
+        read_query('''SELECT 1 FROM users
+                   WHERE id = ? and player_profile_id = ?''',
+                   (user_id, player_id)))
