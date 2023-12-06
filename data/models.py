@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, constr
 from typing import Optional
-from common.validators import tournament_format_validator, match_format_validator, check_date
+from common.validators import tournament_format_validator, match_format_validator, check_date, check_if_num
 from datetime import datetime
 from datetime import date
 
@@ -132,6 +132,51 @@ class Tournament(TournamentBase):
                    )
 
 
+class TournamentsAllResponseMod(BaseModel):
+    id: int
+    title: str
+    tour_format: str
+    start_date: date
+    winner: str
+    prize: int
+
+    @classmethod
+    def from_query_result(cls, id, title, tour_format, 
+                          start_date, winner, prize):
+        return cls(id=id,
+                   title=title,
+                   tour_format=tour_format.capitalize(),
+                   start_date=start_date,
+                   winner=winner,
+                   prize=prize)
+
+class MatchesResponseMod(BaseModel):
+    match_id: int
+    score: str
+    match_date: datetime | None
+    tournament_title: str
+
+class TournamentByIDRespModel(BaseModel):
+    id: Optional[int] = None
+    title: str
+    tour_format: str
+    prize: int = None
+    match_format: str
+    winner: str | None = None
+    start_date: Optional[datetime] = None
+    matches: list[MatchesResponseMod] | None = None
+    
+
+    @classmethod
+    def from_query_result(cls, id, title, tour_format, prize, match_format, winner, start_date):
+        return cls(id=id,
+                   title=title,
+                   tour_format=tour_format.capitalize(),
+                   prize=prize,
+                   match_format=match_format,
+                   winner=winner,
+                   start_date=start_date)
+
 class TournamentCreateModel(TournamentBase):
     start_date: date
 
@@ -182,11 +227,7 @@ class WinnerResponseMode(BaseModel):
     country: str | None
     tournament_won: str
 
-class MatchesResponseMod(BaseModel):
-    match_id: int
-    score: str
-    match_date: datetime | None
-    tournament_title: str
+
 
 class SetMatchDate(BaseModel):
     date: datetime
@@ -228,3 +269,16 @@ class Notify_player(BaseModel):
 class Director_promotion(BaseModel):
     user_id: int
     approved: int
+
+class LeagueRankingResponse(BaseModel):
+    pl_id: int
+    name: str
+    tournament_title: str
+    points: int | object
+
+    @classmethod
+    def from_query_result(cls, pl_id, name, tournament_title, points):
+        return cls(pl_id=pl_id,
+                   name=name,
+                   tournament_title=tournament_title,
+                   points=check_if_num(points))

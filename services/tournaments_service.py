@@ -1,5 +1,5 @@
 from data.database import read_query, update_query, insert_query
-from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, Match, NewPhase
+from data.models import Tournament, Player, TournamentCreateModel, UpdateParticipantModel, TournamentsAllResponseMod, TournamentByIDRespModel, LeagueRankingResponse
 import random
 from common.validators import tournament_format_validator
 from common.exceptions import BadRequest, NotFound
@@ -7,11 +7,12 @@ from fastapi import Response
 from services import user_service, match_service
 import itertools
 from datetime import date
-from common.validators import _MATCH_PHASES
+from common.validators import _MATCH_PHASES, validate_match_date
+
 
 
 def get_all_tournaments(title, tour_format):
-    query = "SELECT id, title, format, prize, start_date, winner FROM tournaments"
+    query = "SELECT id, title, format, start_date, winner, prize FROM tournaments"
     params = []
     where_clauses = []
     if title:
@@ -23,7 +24,7 @@ def get_all_tournaments(title, tour_format):
     if where_clauses:
         query += " WHERE " + " AND ".join(where_clauses)
     data = read_query(query, params)
-    tournaments = [Tournament.from_query_result(*row) for row in data]
+    tournaments = [TournamentsAllResponseMod.from_query_result(*row) for row in data]
     return tournaments
 
 
@@ -31,15 +32,25 @@ def get_tournament_by_id(tour_id: int) -> Tournament:
     data = read_query('SELECT id, title, format, prize, start_date, winner FROM tournaments WHERE id = ?', (tour_id,))
     tournament = next((Tournament.from_query_result(*row) for row in data), None)
     if tournament:
-        tournament.participants = get_tournament_participants(tournament.id)
+        participants = get_tournament_participants(tournament.id)
+        tournament.participants = [player.full_name for player in participants]
         tournament.matches = match_service.get_matches_for_tournament(tournament.id)
-        tournament.match_format = tournament.matches[-1].format
+        tournament.match_format = tournament.matches[-1].format if tournament.matches else 'No matches'
     return tournament
 
+def get_tournament_by_id_v2(tour_id: int) -> TournamentByIDRespModel:
+    data = read_query('''SELECT t.id, t.title, t.format, t.prize, m.format, t.winner, t.start_date 
+                        FROM tournaments t
+                        JOIN matches m ON m.tournament_id = t.id
+                        WHERE t.id = ?''', (tour_id,))
+    tournament = next((TournamentByIDRespModel.from_query_result(*row) for row in data), None)
+    if tournament:
+        tournament.matches = match_service.get_matches_by_tournament_v2(tournament.id)
+    return tournament
 
 def create_tournament(tournament: TournamentCreateModel) -> Tournament:
     generated_id = insert_query("INSERT INTO tournaments (format, title, prize, start_date) VALUES (?, ?, ?, ?)",
-                                (tournament.tour_format, tournament.title,
+                                (tournament.tour_format.lower(), tournament.title,
                                  tournament.prize, tournament.start_date))
     return Tournament(
         id=generated_id,
@@ -68,13 +79,18 @@ def manage_tournament(tournament, new_date: date | None, change_participants: Up
     if new_date:
         old_date = tournament.start_date
         update_query("UPDATE tournaments SET start_date = ? WHERE id = ?", (new_date, tournament.id))
+        for match in tournament.matches:
+            if match_service.is_match_finished(match.id):
+                continue
+            match_date = validate_match_date(match, new_date)
+            match_service.set_match_date(match.id, match_date)
         return Response(status_code=200, content=f'Successfully changed tournament start date from '
                                                           f'{old_date} to {new_date}')
     if change_participants:
         new_player = user_service.get_player_profile_by_fullname(change_participants.new_player)
         old_player = user_service.get_player_profile_by_fullname(change_participants.old_player)
-        tournament.participants.remove(old_player)
-        tournament.participants.append(new_player)
+        tournament.participants.remove(old_player.full_name)
+        tournament.participants.append(new_player.full_name)
         if match_service.update_participants_for_matches(tournament, old_player, new_player):
             return Response(status_code=200, content=f'Successfully changed tournament participant: '
                                                               f'{old_player.full_name} with {new_player.full_name} '
@@ -178,3 +194,26 @@ def move_phase(tournament_id: int, current_phase: str):
         raise NotFound(detail=f'No available matches with phase: {current_phase}')
     winners_reversed = match_service.get_winners_ids(match_ids)
     return match_service.create_next_phase(winners_reversed, current_phase, tournament)
+
+
+def validate_participants(tournament, update_participants):
+    if update_participants.old_player not in tournament.participants:
+        raise NotFound(f'Player: {update_participants.old_player} is not part of the tournament participants')
+    new_player = user_service.get_player_profile_by_fullname(update_participants.new_player)
+    if new_player in tournament.participants:
+        raise BadRequest(f'Player: {update_participants.new_player} already in the tournament')
+    if not new_player:
+        _ = user_service.create_player_statistic(user_service.create_player_profile(update_participants.new_player))
+
+
+def get_ranking_league(tournament_id: int):
+
+    data = read_query('''SELECT pp.id, pp.full_name, t.title, SUM(mp.pts) as points FROM players_profiles pp
+                        JOIN tournaments t ON t.id = ?
+                        JOIN matches m ON m.tournament_id = t.id
+                        JOIN matches_has_players_profiles mp ON mp.matches_id = m.id
+                        WHERE pp.id = mp.player_profile_id
+                        GROUP BY pp.id 
+                        ORDER BY Points desc''', (tournament_id,))
+
+    return (LeagueRankingResponse.from_query_result(*row) for row in data)
