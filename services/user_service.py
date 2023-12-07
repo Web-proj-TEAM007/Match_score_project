@@ -120,3 +120,22 @@ def get_user_player_profile_full_name(user):
     profile_full_name = read_query('''SELECT full_name FROM players_profiles WHERE id = ?''',
                                    (profile_id[0][0],))
     return profile_full_name[0][0]
+
+def register_users_for_testing(user_email: str, user_pass: str, user_role: str):
+    
+    if not email_exists(user_email):
+        create_user_v2(user_email, user_pass, user_role)
+    if not email_exists(user_email):
+        create_user_v2(user_email, user_pass, user_role)
+
+def create_user_v2(email: str, password: str, user_role: str):
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    insert_query("INSERT INTO users(email, password, user_role) VALUES(?,?,?)",
+                 (email, hashed_password, user_role))
+
+    return sign_jwt(email)
+
+def initiate_registration():
+    register_users_for_testing('director@director.com', 'test', 'director')
+    register_users_for_testing('admin@director.com', 'test', 'admin')
