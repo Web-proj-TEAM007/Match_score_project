@@ -84,7 +84,7 @@ def updating_player_opponents(player_id: int) -> None:
     update_query('''UPDATE players_statistics 
                     SET best_opp = (WITH matchess as
                                     (SELECT matches_id FROM matches_has_players_profiles
-                                    WHERE player_profile_id = ? and win is not Null or pts is not Null)
+                                    WHERE player_profile_id = ?)
                             SELECT pp.full_name 
                             FROM matches_has_players_profiles mp, matchess ms, players_statistics ps, players_profiles pp
                             WHERE mp.player_profile_id != ? and ms.matches_id = mp.matches_id 
@@ -95,7 +95,7 @@ def updating_player_opponents(player_id: int) -> None:
                             LIMIT 1),
                     worst_opp = (WITH matchesss as
                                     (SELECT matches_id FROM matches_has_players_profiles
-                                    WHERE player_profile_id = ? and win is not Null or pts is not Null)
+                                    WHERE player_profile_id = ?)
                             SELECT pp.full_name 
                             FROM matches_has_players_profiles mp, matchesss ms, players_statistics ps, players_profiles pp
                             WHERE mp.player_profile_id != ? and ms.matches_id = mp.matches_id 
@@ -106,7 +106,7 @@ def updating_player_opponents(player_id: int) -> None:
                             LIMIT 1),
                     most_played_opp = (WITH matchessss AS
                                                 (SELECT matches_id FROM matches_has_players_profiles
-                                                WHERE player_profile_id = ? and win is not Null or pts is not Null)
+                                                WHERE player_profile_id = ?)
                             SELECT full_name FROM matches_has_players_profiles mp
                             JOIN players_profiles pp ON pp.id = mp.player_profile_id
                             JOIN matchessss m ON m.matches_id = mp.matches_id and mp.player_profile_id != ?
