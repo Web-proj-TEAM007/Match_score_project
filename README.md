@@ -30,6 +30,16 @@ Tournament directors have long needed a solution that will streamline the organi
 
 # Instructions how to use the application:
 
+Ще ви се създадат 2 потребителя при стартирането на програмата:
+
+username: 'director@director.com'
+pass:'test', 
+role:'director'
+
+user2:'admin@director.com',
+pass:'test',
+role:'admin'
+
 1. Потребител  / User
 
       1)	Register User:
