@@ -31,20 +31,24 @@ def requests(user_role, unprocessed, user_id):
 
 def handle(user_id, approved, user_role):
 
-
-
     if user_role.lower() != 'admin':
         raise BadRequest('Access not allowed!')
     
-
     update_query('''UPDATE users, requests SET users.user_role = ?, requests.approved = ?
                   WHERE users.id = ? AND requests.user_id = ?''',
                     ('Director', _STATUS[approved] ,user_id, user_id))
+
+    
+    user_email = read_query('''SELECT email from users where id = ?''', (user_id,))
+
+    send_email_director(user_email[0][0], approved, user_role)
     
     if approved == 1:
         return Response(status_code=200, content="Request approved")
     else:
         return Response(status_code=200, content="Request rejected")
+
+
 
     
    
@@ -58,12 +62,19 @@ def link(user_id, player_id, approved, user_role):
     update_query('''UPDATE users, requests SET users.player_profile_id = ?, requests.approved = ?
                   WHERE users.id = ? AND requests.user_id = ?''',
                     (player_id, _STATUS[approved] ,user_id, user_id))
+    
+    user_email = read_query('''SELECT email from users where id = ?''', (user_id,))
 
+    send_email_player(user_email[0][0], approved, user_role)
 
     if approved == 1:
         return Response(status_code=200, content="Request approved")
     else:
         return Response(status_code=200, content="Request rejected")
+
+
+
+
     
 
 def send_email_player(user_email, approval, user_role):

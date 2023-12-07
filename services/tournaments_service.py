@@ -225,4 +225,4 @@ def get_ranking_league(tournament_id: int):
 
 def is_tournament_over(tournament_id: int) -> bool:
     winner = read_query('SELECT winner FROM tournaments WHERE id = ?', (tournament_id,))
-    return True if winner != 'Awaiting winner' else False
+    return True if winner[0][0] != 'Awaiting winner' else False

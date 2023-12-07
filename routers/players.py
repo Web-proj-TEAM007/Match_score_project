@@ -42,6 +42,11 @@ def edit_player(player_id: int, edited_player: PlayerEdit,
 def create_profile(data: Input_player, token: str = Depends(JWTBearer())):
     """Create profile with you name and country. Sport club is optional."""
 
+    user = get_user_from_token(token)
+
+    if user.user_role.lower() != 'director':
+        raise Unauthorized(f'Request denied, only Directors can create player profile.')
+
     player = player_service.create_player_profile(data.full_name, data.country, data.sport_club)
     user_service.create_player_statistic(player)
     return Response(status_code=200, content="Profile created successfully")

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 from common.exceptions import BadRequest, NotFound
 
 
@@ -45,6 +45,10 @@ def check_score(score: int | None):
 
 
 def time_limit_validator(match_date, limit):
+    match_date_str = str(match_date)
+    hours_minutes_seconds = datetime.strptime(match_date_str, '%Y-%m-%d %H:%M:%S').strftime('%H:%M:%S')
+    if hours_minutes_seconds == '00:00:00':
+        return
     # match_date = 2023-11-30 10:00:00 , limit = 60 (minutes)
     time_limit = match_date + timedelta(minutes=limit)
     return time_limit < datetime.now()

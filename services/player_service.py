@@ -63,6 +63,9 @@ def upd_player_stat_match_when_draw(player_1_id: int, player_2_id: int) -> BadRe
 
 def update_player_stat_tourn(player_id: int, t_win: bool) -> None | BadRequest:
 
+    if not check_if_player_has_stats(player_id):
+        creat_pl_stat(player_id)
+
     if t_win:
         ans = update_query('''UPDATE players_statistics 
                             SET tournaments_won = tournaments_won + 1 
@@ -145,3 +148,13 @@ def user_is_player(user_id: int, player_id: int):
         read_query('''SELECT 1 FROM users
                    WHERE id = ? and player_profile_id = ?''',
                    (user_id, player_id)))
+
+def check_if_player_has_stats(player_id: int) -> bool:
+
+    return any(
+        read_query('''SELECT 1 FROM players_statistics
+                   WHERE player_profile_id = ?''', (player_id,)))
+
+def creat_pl_stat(player_id: int) -> None:
+
+    insert_query("INSERT INTO players_statistics(player_profile_id) VALUES(?)", (player_id,))
