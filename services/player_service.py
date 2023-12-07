@@ -13,10 +13,11 @@ def get_player_by_id(pl_id: int):
                             JOIN players_profiles pp ON pp.id = ps.player_profile_id
                             WHERE pp.id = ?''', (pl_id,))
     
-    ratio = form_ratio(data[0][4], data[0][5])
-    data[0] = list(data[0])
-    data[0].pop(4)
-    data[0].pop(4)
+    if data:
+        ratio = form_ratio(data[0][4], data[0][5])
+        data[0] = list(data[0])
+        data[0].pop(4)
+        data[0].pop(4)
 
     return next((PlayerStatistics.from_query_result(id=id,full_name=full_name,country=country,sport_club=sport_club,
                                                     matches_played=matches_played,
